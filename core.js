@@ -57,6 +57,53 @@
     return s === 'true' || s === 'y' || s === 'yes' || s === '1' || s === 'on';
   }
 
+  /* 페이지 번호는 "42", "p.42", "42-43", "42쪽"처럼 적어도 됩니다.
+     앞의 p./페이지 같은 말은 떼고 숫자·범위만 남깁니다. */
+  function pageLabel(v) {
+    var s = str(v).replace(/^\s*(?:p\.?|page|페이지)\s*/i, '').replace(/\s*(?:쪽|페이지|p\.?)$/i, '').trim();
+    s = s.replace(/[^0-9\-~,\s]/g, '').replace(/\s+/g, '').replace(/,+/g, ',');
+    s = s.replace(/^[-,]+|[-,]+$/g, '');
+    return s.slice(0, 12);
+  }
+
+  /* 마음에 든 문구 한 개: { id, text, page?, createdAt } */
+  function normalizeQuote(raw) {
+    if (raw === null || raw === undefined) return null;
+    var text = '', id = '', page = '', createdAt = '';
+
+    if (typeof raw === 'string' || typeof raw === 'number') {
+      text = str(raw);
+    } else if (typeof raw === 'object') {
+      text = str(firstOf(raw, ['text', 'quote', 'content', 'sentence', 'phrase', 'body', '문구', '구절', '내용']));
+      page = firstOf(raw, ['page', 'pageNo', 'pageNumber', 'p', '페이지']);
+      id = str(firstOf(raw, ['id', 'key', '_id', 'quoteId']));
+      createdAt = str(firstOf(raw, ['createdAt', 'addedAt', 'created', 'date']));
+    }
+
+    if (!text) return null;
+    var q = { id: id || newId(), text: text };
+    var p = pageLabel(page);
+    if (p) q.page = p;
+    q.createdAt = createdAt || new Date().toISOString();
+    return q;
+  }
+
+  /* 문구 목록: 배열 / 문구 한 개 / 문자열 하나 모두 허용. id가 겹치면 새로 붙입니다. */
+  function normalizeQuotes(raw) {
+    if (raw === null || raw === undefined || raw === '') return [];
+    var list = Array.isArray(raw) ? raw : [raw];
+    var seen = {};
+    var out = [];
+    list.forEach(function (item) {
+      var q = normalizeQuote(item);
+      if (!q) return;
+      if (seen[q.id]) q.id = newId();
+      seen[q.id] = true;
+      out.push(q);
+    });
+    return out;
+  }
+
   /* 어떤 모양의 책 데이터든 우리 형식으로 바꿉니다.
      (예전에 쓰던 앱에서 내보낸 JSON도 최대한 살려서 읽습니다) */
   function normalizeBook(raw) {
@@ -72,7 +119,8 @@
       finishedAt: toDate(firstOf(raw, ['finishedAt', 'date', '완독일', 'readDate', 'finished', 'doneAt', 'endDate', 'readAt'])),
       cover: str(firstOf(raw, ['cover', 'coverUrl', 'coverURL', 'image', 'imageUrl', 'thumbnail', 'thumbnailUrl', '표지'])) || '',
       memo: str(firstOf(raw, ['memo', 'comment', '한줄평', '한 줄 평', 'review', 'note', 'oneLine', 'summary'])),
-      heart: toBool(firstOf(raw, ['heart', 'favorite', 'liked', 'isHeart', 'love', 'like']))
+      heart: toBool(firstOf(raw, ['heart', 'favorite', 'liked', 'isHeart', 'love', 'like'])),
+      quotes: normalizeQuotes(firstOf(raw, ['quotes', 'quoteList', 'highlights', 'passages', '문구', '구절']))
     };
     if (raw.createdAt) book.createdAt = str(raw.createdAt);
     if (raw.sample) book.sample = true;
@@ -199,6 +247,14 @@
     return books;
   }
 
+  function cleanQuotes(quotes) {
+    return (quotes || []).map(function (q) {
+      var out = { id: q.id, text: q.text, createdAt: q.createdAt || '' };
+      if (q.page) out.page = q.page;
+      return out;
+    });
+  }
+
   function cleanForExport(b) {
     return {
       id: b.id,
@@ -208,14 +264,15 @@
       finishedAt: b.finishedAt || '',
       cover: b.cover || '',
       memo: b.memo || '',
-      heart: !!b.heart
+      heart: !!b.heart,
+      quotes: cleanQuotes(b.quotes)
     };
   }
 
   function exportPayload(books) {
     return JSON.stringify({
       app: '나만의 서재',
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
       count: books.length,
       books: books.map(cleanForExport)
@@ -227,12 +284,16 @@
     newId: newId,
     toDate: toDate,
     normalizeBook: normalizeBook,
+    normalizeQuote: normalizeQuote,
+    normalizeQuotes: normalizeQuotes,
+    pageLabel: pageLabel,
     mergeLibrary: mergeLibrary,
     sortBooks: sortBooks,
     computeStats: computeStats,
     parseImport: parseImport,
     exportPayload: exportPayload,
-    cleanForExport: cleanForExport
+    cleanForExport: cleanForExport,
+    cleanQuotes: cleanQuotes
   };
 
   if (typeof module === 'object' && module.exports) module.exports = api;

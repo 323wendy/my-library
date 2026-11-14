@@ -19,7 +19,10 @@
     filter: 'all',
     editingId: null,
     detailId: null,
-    formCat: '기타'
+    formCat: '기타',
+    quoteDraft: '',
+    quotePage: '',
+    quoteEditingId: null
   };
 
   var el = {};
@@ -172,10 +175,19 @@
         return false;
       }
       if (!q) return true;
-      var hay = (b.title + ' ' + (b.author || '') + ' ' + (b.memo || '') + ' ' + (b.category || '')).toLowerCase();
-      return hay.indexOf(q) >= 0;
+      return haystack(b).indexOf(q) >= 0;
     });
     return C.sortBooks(list);
+  }
+
+  /* 제목·저자·한 줄 평·카테고리와 함께 저장한 문구 내용으로도 검색합니다. */
+  function haystack(b) {
+    var parts = [b.title, b.author || '', b.memo || '', b.category || ''];
+    (b.quotes || []).forEach(function (quote) {
+      parts.push(quote.text || '');
+      if (quote.page) parts.push('p.' + quote.page);
+    });
+    return parts.join(' ').toLowerCase();
   }
 
   function fallbackHTML(book) {
@@ -284,6 +296,9 @@
     var b = findBook(id);
     if (!b) return;
     state.detailId = id;
+    state.quoteDraft = '';
+    state.quotePage = '';
+    state.quoteEditingId = null;
     renderDetail(b);
     openModal(el.detailModal);
     el.detailBody.scrollTop = 0;
@@ -306,10 +321,204 @@
       + '<button type="button" class="chip-static tappable' + (b.heart ? ' on' : '') + '" data-act="detail-heart">'
       + (b.heart ? '❤️ 하트' : '🤍 하트') + '</button>'
       + '</div>'
-      + (b.memo ? '<p class="detail-memo">' + esc(b.memo) + '</p>' : '');
+      + (b.memo ? '<p class="detail-memo">' + esc(b.memo) + '</p>' : '')
+      + quotesHTML(b);
 
     attachImageFallback(el.detailBody.querySelector('img'));
     el.detailBody.scrollTop = scrollTop;
+  }
+
+  /* ---------------- 마음에 든 문구 ---------------- */
+
+  function dateLabel(iso) {
+    var m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return '';
+    return m[1] + '.' + m[2] + '.' + m[3];
+  }
+
+  function findQuote(book, qid) {
+    var list = (book && book.quotes) || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === qid) return list[i];
+    }
+    return null;
+  }
+
+  function quotesHTML(b) {
+    return '<section class="quotes" id="quotes-section" aria-label="마음에 든 문구">'
+      + quotesInner(b) + '</section>';
+  }
+
+  function quotesInner(b) {
+    var quotes = b.quotes || [];
+    var editingId = state.quoteEditingId;
+    if (editingId && !findQuote(b, editingId)) {
+      editingId = null;
+      state.quoteEditingId = null;
+    }
+    var editing = !!editingId;
+
+    var html = '<div class="quotes-head">'
+      + '<h3>💬 마음에 든 문구</h3>'
+      + (quotes.length ? '<span class="quotes-count">' + quotes.length + '개</span>' : '')
+      + '</div>';
+
+    html += '<div class="quote-form' + (editing ? ' is-editing' : '') + '">'
+      + (editing ? '<p class="quote-form-note">고칠 내용을 적고 <b>수정 완료</b>를 눌러주세요.</p>' : '')
+      + '<textarea class="input quote-input" id="quote-text" rows="2" maxlength="1000"'
+      + ' placeholder="마음에 남은 문장을 적어보세요." aria-label="문구 내용">' + esc(state.quoteDraft) + '</textarea>'
+      + '<div class="quote-form-row">'
+      + '<input class="input quote-page" id="quote-page" type="text" inputmode="numeric" maxlength="12"'
+      + ' placeholder="페이지 (선택)" aria-label="페이지 번호 (선택)" autocomplete="off" value="' + esc(state.quotePage) + '">'
+      + '<button type="button" class="quote-save" data-act="quote-save">' + (editing ? '수정 완료' : '+ 저장') + '</button>'
+      + (editing ? '<button type="button" class="quote-cancel" data-act="quote-cancel">취소</button>' : '')
+      + '</div>'
+      + '</div>';
+
+    if (!quotes.length) {
+      html += '<p class="quotes-empty">아직 저장한 문구가 없어요. 인상 깊었던 한 문장을 남겨보세요.</p>';
+      return html;
+    }
+
+    html += '<ul class="quote-list">';
+    quotes.slice().reverse().forEach(function (q) {
+      var tags = '';
+      if (q.page) tags += '<span class="quote-page-tag">p.' + esc(q.page) + '</span>';
+      var d = dateLabel(q.createdAt);
+      if (d) tags += '<span class="quote-date">' + d + '</span>';
+      html += '<li class="quote-card' + (q.id === editingId ? ' is-editing' : '') + '">'
+        + '<p class="quote-text">' + esc(q.text) + '</p>'
+        + '<div class="quote-meta">'
+        + '<span class="quote-tags">' + tags + '</span>'
+        + '<span class="quote-actions">'
+        + '<button type="button" class="quote-act" data-act="quote-edit" data-qid="' + esc(q.id) + '" aria-label="이 문구 수정">수정</button>'
+        + '<button type="button" class="quote-act danger" data-act="quote-delete" data-qid="' + esc(q.id) + '" aria-label="이 문구 삭제">삭제</button>'
+        + '</span>'
+        + '</div>'
+        + '</li>';
+    });
+    html += '</ul>';
+    return html;
+  }
+
+  function renderQuotesSection() {
+    var host = el.detailBody.querySelector('#quotes-section');
+    var b = state.detailId ? findBook(state.detailId) : null;
+    if (!host || !b) return;
+    host.innerHTML = quotesInner(b);
+  }
+
+  function readQuoteInput() {
+    var t = el.detailBody.querySelector('#quote-text');
+    var p = el.detailBody.querySelector('#quote-page');
+    return { text: t ? String(t.value).trim() : '', page: p ? p.value : '' };
+  }
+
+  function commitQuotes(book, quotes, message, keepDraft) {
+    upsertLocal(Object.assign({}, book, { quotes: quotes }));
+    if (!keepDraft) {
+      state.quoteDraft = '';
+      state.quotePage = '';
+      state.quoteEditingId = null;
+    }
+    refresh();
+    if (state.detailId === book.id) renderQuotesSection();
+    if (message) toast(message);
+  }
+
+  function saveQuote() {
+    var b = state.detailId ? findBook(state.detailId) : null;
+    if (!b) return;
+
+    var input = readQuoteInput();
+    if (!input.text) {
+      toast('문구를 먼저 적어 주세요.');
+      var t = el.detailBody.querySelector('#quote-text');
+      if (t) t.focus();
+      return;
+    }
+
+    var page = C.pageLabel(input.page);
+    var quotes = (b.quotes || []).slice();
+    var editingId = state.quoteEditingId;
+
+    if (editingId) {
+      var i = -1;
+      for (var k = 0; k < quotes.length; k++) {
+        if (quotes[k].id === editingId) { i = k; break; }
+      }
+      if (i >= 0) {
+        var updated = Object.assign({}, quotes[i], { text: input.text });
+        if (page) updated.page = page; else delete updated.page;
+        quotes[i] = updated;
+      } else {
+        editingId = null;
+      }
+    }
+
+    if (!editingId) {
+      var fresh = { id: C.newId(), text: input.text, createdAt: new Date().toISOString() };
+      if (page) fresh.page = page;
+      quotes.push(fresh);
+    }
+
+    commitQuotes(b, quotes, editingId ? '문구를 고쳤어요.' : '문구를 저장했어요.');
+
+    var sec = el.detailBody.querySelector('#quotes-section');
+    if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: 'nearest' });
+  }
+
+  function startQuoteEdit(qid) {
+    var b = state.detailId ? findBook(state.detailId) : null;
+    var q = b ? findQuote(b, qid) : null;
+    if (!q) return;
+    state.quoteEditingId = q.id;
+    state.quoteDraft = q.text;
+    state.quotePage = q.page || '';
+    renderQuotesSection();
+    var t = el.detailBody.querySelector('#quote-text');
+    if (t) {
+      t.focus();
+      try { t.setSelectionRange(t.value.length, t.value.length); } catch (err) { /* noop */ }
+    }
+    var sec = el.detailBody.querySelector('#quotes-section');
+    if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+
+  function cancelQuoteEdit() {
+    state.quoteEditingId = null;
+    state.quoteDraft = '';
+    state.quotePage = '';
+    renderQuotesSection();
+  }
+
+  function quotePreview(text) {
+    var t = String(text || '').replace(/\s+/g, ' ').trim();
+    return t.length > 24 ? t.slice(0, 24) + '…' : t;
+  }
+
+  function deleteQuote(qid) {
+    var b = state.detailId ? findBook(state.detailId) : null;
+    var target = b ? findQuote(b, qid) : null;
+    if (!b || !target) return;
+
+    confirmDialog({
+      title: '문구를 삭제할까요?',
+      message: '「' + quotePreview(target.text) + '」\n지운 문구는 되돌릴 수 없어요.',
+      okText: '삭제'
+    }).then(function (ok) {
+      if (!ok) return;
+      var book = state.detailId ? findBook(state.detailId) : null;
+      if (!book) return;
+      var wasEditing = state.quoteEditingId === qid;
+      var left = (book.quotes || []).filter(function (q) { return q.id !== qid; });
+      if (wasEditing) {
+        state.quoteEditingId = null;
+        state.quoteDraft = '';
+        state.quotePage = '';
+      }
+      commitQuotes(book, left, '문구를 지웠어요.', !wasEditing);
+    });
   }
 
   /* ---------------- 등록 / 수정 ---------------- */
@@ -411,6 +620,10 @@
     if (existing && existing.createdAt) book.createdAt = existing.createdAt;
     else book.createdAt = new Date().toISOString();
     if (existing && existing.sample) book.sample = true;
+    /* 책 정보를 고쳐도 저장해 둔 문구는 그대로 둡니다. */
+    if (existing && existing.quotes && existing.quotes.length) {
+      book.quotes = existing.quotes.map(function (q) { return Object.assign({}, q); });
+    }
 
     upsertLocal(book);
     closeModal(el.formModal);
@@ -691,9 +904,34 @@
       if (state.detailId) deleteBook(state.detailId);
     });
     el.detailBody.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-act="detail-heart"]');
-      if (!btn || !state.detailId) return;
-      toggleHeart(state.detailId);
+      if (!state.detailId) return;
+      var btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      var act = btn.getAttribute('data-act');
+      if (act === 'detail-heart') { toggleHeart(state.detailId); return; }
+      if (act === 'quote-save') { saveQuote(); return; }
+      if (act === 'quote-cancel') { cancelQuoteEdit(); return; }
+      if (act === 'quote-edit') { startQuoteEdit(btn.getAttribute('data-qid')); return; }
+      if (act === 'quote-delete') { deleteQuote(btn.getAttribute('data-qid')); }
+    });
+
+    el.detailBody.addEventListener('input', function (e) {
+      var t = e.target;
+      if (!t || !t.id) return;
+      if (t.id === 'quote-text') state.quoteDraft = t.value;
+      else if (t.id === 'quote-page') state.quotePage = t.value;
+    });
+
+    el.detailBody.addEventListener('keydown', function (e) {
+      var t = e.target;
+      if (!t || !t.id) return;
+      if (t.id === 'quote-text' && e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        saveQuote();
+      } else if (t.id === 'quote-page' && e.key === 'Enter') {
+        e.preventDefault();
+        saveQuote();
+      }
     });
 
     el.formClose.addEventListener('click', function () { closeModal(el.formModal); });

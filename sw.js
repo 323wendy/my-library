@@ -1,5 +1,5 @@
 /* 나만의 서재 — 오프라인 캐시 (앱 껍데기만 저장, books.json은 항상 새로 확인) */
-const CACHE = 'shelf-v1';
+const CACHE = 'shelf-v2';
 const SHELL = [
   './',
   './index.html',

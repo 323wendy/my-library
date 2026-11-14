@@ -662,6 +662,182 @@ h1 {
   white-space: pre-wrap;
 }
 
+/* ---------- 마음에 든 문구 ---------- */
+.quotes {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+  text-align: left;
+}
+
+.quotes-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.quotes-head h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.4px;
+}
+.quotes-count {
+  flex: none;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #f0f0f4;
+  color: #55555d;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.quote-form {
+  padding: 12px;
+  border: 1px dashed #dcdce2;
+  border-radius: 16px;
+  background: #fbfbfc;
+  transition: border-color .15s ease, background .15s ease;
+}
+.quote-form.is-editing { border-style: solid; border-color: #111114; background: #fff; }
+.quote-form-note {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.quote-form-note b { color: var(--ink); }
+
+.quote-input {
+  min-height: 66px;
+  font-size: 15px;
+  line-height: 1.55;
+  background: #fff;
+}
+.quote-form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.quote-page {
+  flex: 1 1 auto;
+  width: 0;
+  min-width: 0;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 13px;
+  font-size: 14.5px;
+  background: #fff;
+}
+.quote-save {
+  flex: none;
+  height: 44px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -.2px;
+  white-space: nowrap;
+  transition: transform .12s ease, opacity .12s ease;
+}
+.quote-save:active { transform: scale(.96); opacity: .9; }
+.quote-cancel {
+  flex: none;
+  height: 44px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 999px;
+  background: #f1f1f4;
+  color: #33333a;
+  font-size: 14.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.quotes-empty {
+  margin: 14px 0 0;
+  word-break: keep-all;
+  padding: 14px;
+  border-radius: 13px;
+  background: #fafafb;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.quote-list {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.quote-card {
+  padding: 13px 14px 9px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .02);
+}
+.quote-card.is-editing { border-color: #111114; }
+.quote-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.68;
+  color: #26262c;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.quote-text::before { content: "“"; }
+.quote-text::after { content: "”"; }
+.quote-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+.quote-tags { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; min-width: 0; }
+.quote-page-tag {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #f2f2f5;
+  color: #5d5d65;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.quote-date {
+  font-size: 11.5px;
+  color: #a2a2aa;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.quote-actions { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+.quote-act {
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: #6e6e76;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.quote-act:active { background: #f2f2f5; }
+.quote-act.danger { color: #d6302b; }
+.quote-act.danger:active { background: var(--red-soft); }
+
 /* 폼 */
 .form-body {
   flex: 1;
