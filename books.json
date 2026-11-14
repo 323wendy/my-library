@@ -1,0 +1,150 @@
+{
+  "app": "나만의 서재",
+  "version": 1,
+  "updatedAt": "2026-11-14",
+  "books": [
+    {
+      "id": "chotdol",
+      "title": "쇳돌",
+      "author": "이라영",
+      "category": "인문",
+      "finishedAt": "2026-09-17",
+      "cover": "covers/chotdol.jpg",
+      "memo": "사라지는 노동의 목소리를 이렇게 오래 들여다볼 수 있다는 것.",
+      "heart": true,
+      "sample": true
+    },
+    {
+      "id": "gureum-saramdeul",
+      "title": "구름 사람들",
+      "author": "이유리",
+      "category": "소설",
+      "finishedAt": "2026-08-04",
+      "cover": "covers/gureum-saramdeul.jpg",
+      "memo": "",
+      "heart": true,
+      "sample": true
+    },
+    {
+      "id": "yasuui-san",
+      "title": "야수의 산",
+      "author": "홍진희",
+      "category": "소설",
+      "finishedAt": "2026-10-21",
+      "cover": "covers/yasuui-san.jpg",
+      "memo": "제3회 브런치북 소설 부문 대상작.",
+      "heart": true,
+      "sample": true
+    },
+    {
+      "id": "chaek-ilgeojuneun-namja",
+      "title": "책 읽어주는 남자",
+      "author": "베른하르트 슐링크",
+      "category": "소설",
+      "finishedAt": "2026-05-12",
+      "cover": "covers/chaek-ilgeojuneun-namja.jpg",
+      "memo": "",
+      "heart": false,
+      "sample": true
+    },
+    {
+      "id": "sapiens",
+      "title": "사피엔스",
+      "author": "유발 하라리",
+      "category": "인문",
+      "finishedAt": "2025-11-30",
+      "cover": "covers/sapiens.jpg",
+      "memo": "다시 읽어도 밑줄 긋는 곳이 달라진다.",
+      "heart": false,
+      "sample": true
+    },
+    {
+      "id": "amugeotdo-eopda",
+      "title": "아무것도 없다",
+      "author": "카르멘 라포렛",
+      "category": "소설",
+      "finishedAt": "2026-07-19",
+      "cover": "covers/amugeotdo-eopda.jpg",
+      "memo": "",
+      "heart": true,
+      "sample": true
+    },
+    {
+      "id": "white-sky",
+      "title": "화이트 스카이",
+      "author": "엘리자베스 콜버트",
+      "category": "인문",
+      "finishedAt": "2026-03-08",
+      "cover": "covers/white-sky.jpg",
+      "memo": "",
+      "heart": true,
+      "sample": true
+    },
+    {
+      "id": "han-munjang",
+      "title": "한 문장이 있다고 해보자",
+      "author": "브라이언 딜런",
+      "category": "에세이",
+      "finishedAt": "2026-11-02",
+      "cover": "covers/han-munjang.jpg",
+      "memo": "문장을 쓰는 일에 대한 가장 다정한 책.",
+      "heart": true,
+      "sample": true
+    },
+    {
+      "id": "gihu-hanguksa",
+      "title": "기후로 보는 한국사",
+      "author": "박정재",
+      "category": "인문",
+      "finishedAt": "2026-01-25",
+      "cover": "covers/gihu-hanguksa.jpg",
+      "memo": "",
+      "heart": false,
+      "sample": true
+    },
+    {
+      "id": "sangokmipung",
+      "title": "산곡미풍",
+      "author": "위화",
+      "category": "소설",
+      "finishedAt": "2026-06-14",
+      "cover": "covers/sangokmipung.jpg",
+      "memo": "",
+      "heart": false,
+      "sample": true
+    },
+    {
+      "id": "ppangchung",
+      "title": "빵충 사육 준수 사항",
+      "author": "김혜영",
+      "category": "소설",
+      "finishedAt": "2026-10-05",
+      "cover": "covers/ppangchung.jpg",
+      "memo": "",
+      "heart": false,
+      "sample": true
+    },
+    {
+      "id": "namjaga-doeneun-geot",
+      "title": "남자가 된다는 것",
+      "author": "니콜 크라우스",
+      "category": "소설",
+      "finishedAt": "2026-02-11",
+      "cover": "covers/namjaga-doeneun-geot.jpg",
+      "memo": "",
+      "heart": false,
+      "sample": true
+    },
+    {
+      "id": "silheom-gogohakja",
+      "title": "실험하는 고고학자",
+      "author": "샘 킨",
+      "category": "인문",
+      "finishedAt": "2026-09-29",
+      "cover": "covers/silheom-gogohakja.jpg",
+      "memo": "",
+      "heart": true,
+      "sample": true
+    }
+  ]
+}

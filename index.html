@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>나만의 서재 📚</title>
+<meta name="description" content="내가 읽은 책을 한 권씩 모으는 나만의 서재. 서재 보기, 독서 통계, 데이터 백업까지.">
+<meta name="theme-color" content="#f3f3f5">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="나만의 서재">
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-heart" viewBox="0 0 24 24">
+    <path d="M12 20.7c-.35 0-.7-.12-.98-.36C8.9 18.5 2.1 13.2 2.1 8.15 2.1 5.02 4.55 2.5 7.6 2.5c1.66 0 3.23.76 4.4 2.05 1.17-1.29 2.74-2.05 4.4-2.05 3.05 0 5.5 2.52 5.5 5.65 0 5.05-6.8 10.35-8.92 12.19-.28.24-.63.36-.98.36z"/>
+  </symbol>
+</svg>
+
+<div class="app" id="app">
+  <header class="app-header">
+    <div class="header-top">
+      <div class="header-titles">
+        <h1>나만의 서재 📚</h1>
+        <p class="summary" id="summary">총 0권의 서재 · ❤️ 0권</p>
+      </div>
+      <button type="button" class="btn-primary" id="btn-add">+ 책 등록</button>
+    </div>
+
+    <div class="search">
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input type="search" id="search" placeholder="책 제목, 저자, 한 줄 평 검색..." autocomplete="off" enterkeyhint="search" aria-label="책 검색">
+      <button type="button" class="search-clear" id="search-clear" aria-label="검색 지우기" hidden>×</button>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="보기 선택">
+      <button type="button" class="tab is-active" role="tab" id="tab-library" aria-selected="true" data-tab="library">서재 보기</button>
+      <button type="button" class="tab" role="tab" id="tab-stats" aria-selected="false" data-tab="stats">독서 통계</button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- 서재 보기 -->
+    <section class="view" id="view-library" role="tabpanel" aria-labelledby="tab-library">
+      <div class="chips" id="chips" role="group" aria-label="카테고리 필터"></div>
+      <div class="notice" id="sample-note" hidden>
+        <p id="sample-note-text">샘플로 넣어둔 책이 있어요. 지우고 내 서재를 채워보세요.</p>
+        <div class="notice-actions">
+          <button type="button" class="primary" id="btn-clear-samples">샘플 지우기</button>
+          <button type="button" id="btn-keep-samples">그대로 두기</button>
+        </div>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty" hidden>
+        <span class="empty-emoji" aria-hidden="true">📚</span>
+        <p id="empty-text">조건에 맞는 책이 없어요.</p>
+        <button type="button" class="btn-soft" id="btn-empty-add">책 등록하기</button>
+      </div>
+    </section>
+
+    <!-- 독서 통계 -->
+    <section class="view" id="view-stats" role="tabpanel" aria-labelledby="tab-stats" hidden>
+      <div class="stat-cards">
+        <div class="stat-card">
+          <span class="stat-label">총 완독</span>
+          <strong class="stat-value" id="stat-total">0권</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">올해 완독</span>
+          <strong class="stat-value" id="stat-year">0권</strong>
+        </div>
+        <div class="stat-card heart">
+          <span class="stat-label">❤️ 하트</span>
+          <strong class="stat-value" id="stat-heart">0권</strong>
+        </div>
+      </div>
+
+      <section class="panel">
+        <h2>연도별 완독 통계 🏆</h2>
+        <div class="bars" id="bars-year"></div>
+      </section>
+
+      <section class="panel">
+        <h2>월별 완독 통계 📅</h2>
+        <div class="bars" id="bars-month"></div>
+      </section>
+
+      <section class="panel">
+        <h2>카테고리별 분포 🏷️</h2>
+        <div class="bars" id="bars-category"></div>
+      </section>
+
+      <section class="panel">
+        <h2>서재 데이터 복사 &amp; 이동 🔄</h2>
+        <p class="panel-note">크롬에서 등록한 책들을 삼성 인터넷으로 옮기거나 백업할 때 사용하세요.</p>
+        <div class="data-actions">
+          <button type="button" class="btn-soft" id="btn-copy">📤 데이터 복사하기</button>
+          <button type="button" class="btn-soft" id="btn-import">📥 데이터 불러오기</button>
+        </div>
+      </section>
+    </section>
+  </main>
+</div>
+
+<!-- 책 상세 -->
+<div class="modal" id="detail-modal" hidden>
+  <div class="sheet full" role="dialog" aria-modal="true" aria-labelledby="detail-heading">
+    <div class="sheet-head">
+      <h2 id="detail-heading">책 상세 정보</h2>
+      <button type="button" class="icon-btn" id="detail-close" aria-label="닫기">×</button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+    <div class="sheet-actions">
+      <button type="button" class="btn-soft" id="detail-edit">수정</button>
+      <button type="button" class="btn-danger" id="detail-delete">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- 책 등록 / 수정 -->
+<div class="modal" id="form-modal" hidden>
+  <div class="sheet full" role="dialog" aria-modal="true" aria-labelledby="form-heading">
+    <div class="sheet-head">
+      <h2 id="form-heading">책 등록</h2>
+      <button type="button" class="icon-btn" id="form-close" aria-label="닫기">×</button>
+    </div>
+    <form class="form-body" id="book-form" novalidate>
+      <div class="field">
+        <label for="f-title">책 제목 <span class="req">*</span></label>
+        <input class="input" id="f-title" name="title" type="text" placeholder="예: 쇳돌" autocomplete="off" required>
+        <p class="field-error" id="f-title-error" hidden>책 제목을 입력해 주세요.</p>
+      </div>
+
+      <div class="field">
+        <label for="f-author">저자</label>
+        <input class="input" id="f-author" name="author" type="text" placeholder="예: 이라영" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="f-date">완독 날짜</label>
+        <input class="input" id="f-date" name="finishedAt" type="date">
+      </div>
+
+      <div class="field">
+        <label>카테고리</label>
+        <div class="cat-chips" id="f-cats" role="group" aria-label="카테고리 선택"></div>
+        <input class="input cat-custom" id="f-cat-custom" type="text" placeholder="카테고리 직접 입력" hidden autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="f-cover">표지 이미지 URL</label>
+        <div class="cover-input">
+          <input class="input" id="f-cover" name="cover" type="text" inputmode="url" placeholder="https://... (비워두면 기본 표지)" autocomplete="off">
+          <span class="cover-preview" id="f-cover-preview" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="f-memo">한 줄 평</label>
+        <textarea class="input" id="f-memo" name="memo" rows="2" placeholder="짧은 감상을 남겨보세요."></textarea>
+      </div>
+
+      <label class="switch-row" for="f-heart">
+        <span>❤️ 하트 표시</span>
+        <span class="switch"><input type="checkbox" id="f-heart" name="heart"><span class="switch-track" aria-hidden="true"></span></span>
+      </label>
+    </form>
+    <div class="sheet-actions">
+      <button type="button" class="btn-soft" id="form-cancel">취소</button>
+      <button type="button" class="btn-primary wide" id="form-save">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 데이터 불러오기 -->
+<div class="modal" id="import-modal" hidden>
+  <div class="sheet full" role="dialog" aria-modal="true" aria-labelledby="import-heading">
+    <div class="sheet-head">
+      <h2 id="import-heading">데이터 불러오기</h2>
+      <button type="button" class="icon-btn" id="import-close" aria-label="닫기">×</button>
+    </div>
+    <div class="form-body import-body">
+      <p class="form-help">복사해 둔 서재 데이터(JSON)를 붙여넣거나 파일로 선택하세요.</p>
+
+      <div class="field">
+        <label for="import-text">붙여넣기</label>
+        <textarea class="input" id="import-text" rows="7" placeholder='{"books": [ ... ]}' spellcheck="false"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="import-file-btn">파일에서 불러오기</label>
+        <button type="button" class="btn-soft" id="import-file-btn">📄 JSON 파일 선택</button>
+        <input type="file" id="import-file" accept=".json,application/json,text/plain" hidden>
+        <p class="file-name" id="import-file-name" hidden></p>
+      </div>
+
+      <fieldset class="mode-group">
+        <legend>불러오는 방법</legend>
+        <label class="mode">
+          <input type="radio" name="import-mode" value="replace" checked>
+          <span><strong>기존 책을 모두 지우고 불러오기</strong><br><small>다른 기기로 옮길 때 좋아요. 현재 기기에 있던 책 목록은 사라져요.</small></span>
+        </label>
+        <label class="mode">
+          <input type="radio" name="import-mode" value="merge">
+          <span><strong>지금 서재에 더해서 불러오기</strong><br><small>같은 책은 불러온 내용으로 바뀌고, 새 책만 추가돼요.</small></span>
+        </label>
+      </fieldset>
+
+      <p class="field-error" id="import-error" hidden></p>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn-soft" id="import-cancel">취소</button>
+      <button type="button" class="btn-primary wide" id="import-submit">불러오기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 확인 대화상자 -->
+<div class="modal center" id="confirm-modal" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">책을 삭제할까요?</h2>
+    <p id="confirm-message">삭제한 책은 되돌릴 수 없어요.</p>
+    <div class="dialog-actions">
+      <button type="button" class="btn-soft" id="confirm-cancel">취소</button>
+      <button type="button" class="btn-danger" id="confirm-ok">삭제</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
