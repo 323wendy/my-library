@@ -1062,9 +1062,12 @@
     var tints = ['rose', 'apricot', 'lavender', 'sage'];
     var html = cats.map(function (c, i) {
       var active = (!isCustom && !forceCustom && state.formCat === c);
-      return '<button type="button" class="chip tint-' + tints[i % tints.length] + (active ? ' is-active' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
+      return '<button type="button" class="chip tint-' + tints[i % tints.length] + (active ? ' is-active' : '') + '"'
+        + ' aria-pressed="' + active + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
     }).join('');
-    html += '<button type="button" class="chip' + ((isCustom || forceCustom) ? ' is-active' : '') + '" data-cat="__custom__">직접 입력</button>';
+    var customActive = isCustom || forceCustom;
+    html += '<button type="button" class="chip' + (customActive ? ' is-active' : '') + '"'
+      + ' aria-pressed="' + customActive + '" data-cat="__custom__">직접 입력</button>';
     el.fCats.innerHTML = html;
 
     el.fCatCustom.hidden = !(isCustom || forceCustom);
