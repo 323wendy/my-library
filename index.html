@@ -51,6 +51,7 @@
     <!-- 서재 보기 -->
     <section class="view" id="view-library" role="tabpanel" aria-labelledby="tab-library">
       <div class="chips" id="chips" role="group" aria-label="카테고리 필터"></div>
+    <div class="chips chips-status" id="status-chips" role="group" aria-label="읽기 상태 필터"></div>
       <div class="notice" id="sample-note" hidden>
         <p id="sample-note-text">샘플로 넣어둔 책이 있어요. 지우고 내 서재를 채워보세요.</p>
         <div class="notice-actions">
@@ -82,6 +83,7 @@
           <strong class="stat-value" id="stat-heart">0권</strong>
         </div>
       </div>
+      <p class="stat-note" id="stat-note"></p>
 
       <section class="panel">
         <h2>연도별 완독 통계 🏆</h2>
@@ -136,7 +138,12 @@
       <div class="field">
         <label for="f-title">책 제목 <span class="req">*</span></label>
         <input class="input" id="f-title" name="title" type="text" placeholder="예: 쇳돌" autocomplete="off" required>
+        <button type="button" class="btn-lookup" id="f-lookup">🔍 표지·저자 찾기</button>
         <p class="field-error" id="f-title-error" hidden>책 제목을 입력해 주세요.</p>
+        <div class="lookup" id="f-lookup-panel" hidden>
+          <p class="lookup-status" id="f-lookup-status" role="status" aria-live="polite"></p>
+          <ul class="lookup-list" id="f-lookup-list"></ul>
+        </div>
       </div>
 
       <div class="field">
@@ -145,8 +152,19 @@
       </div>
 
       <div class="field">
-        <label for="f-date">완독 날짜</label>
-        <input class="input" id="f-date" name="finishedAt" type="date">
+        <label>읽기 상태</label>
+        <div class="cat-chips status-chips" id="f-status" role="group" aria-label="읽기 상태 선택"></div>
+      </div>
+
+      <div class="date-row">
+        <div class="field">
+          <label for="f-start">읽기 시작한 날짜</label>
+          <input class="input" id="f-start" name="startDate" type="date">
+        </div>
+        <div class="field">
+          <label for="f-end">끝난 날짜</label>
+          <input class="input" id="f-end" name="endDate" type="date">
+        </div>
       </div>
 
       <div class="field">

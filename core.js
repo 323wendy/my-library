@@ -8,6 +8,10 @@
 
   var DEFAULT_CATEGORIES = ['소설', '인문', '에세이', '경제/경영', '기타'];
 
+  /* 읽기 상태: 완독 / 중단 / 읽는 중 (기본값은 완독) */
+  var STATUS = { DONE: '완독', STOPPED: '중단', READING: '읽는 중' };
+  var STATUS_LIST = [STATUS.DONE, STATUS.STOPPED, STATUS.READING];
+
   function pad(n) { return n < 10 ? '0' + n : String(n); }
 
   function newId() {
@@ -48,6 +52,16 @@
       return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
     }
     return '';
+  }
+
+  /* "중단", "포기", "DNF", "읽는 중", "reading" … 을 세 가지 상태로 맞춥니다. */
+  function normalizeStatus(v) {
+    var s = str(v).toLowerCase();
+    if (!s) return STATUS.DONE;
+    if (/중단|포기|그만|손절|dnf|abandon|drop|gave up|not finish/.test(s)) return STATUS.STOPPED;
+    if (/읽는|읽고|reading|ongoing|in progress|진행|미완/.test(s)) return STATUS.READING;
+    if (/완독|완료|done|finish|complete|read|finished/.test(s)) return STATUS.DONE;
+    return STATUS.DONE;
   }
 
   function toBool(v) {
@@ -111,17 +125,25 @@
     var title = str(firstOf(raw, ['title', '제목', 'name', 'bookTitle', 'book_name']));
     if (!title) return null;
 
+    /* 예전 데이터의 단일 날짜(finishedAt · date · 완독일 …)는 끝난 날짜(endDate)로 읽습니다. */
+    var endDate = toDate(firstOf(raw, ['endDate', 'finishedAt', 'date', '완독일', 'readDate', 'finished', 'doneAt', 'readAt', 'end', '끝난날짜', '끝난 날짜']));
+    var startDate = toDate(firstOf(raw, ['startDate', 'startedAt', 'start', 'readStart', 'beganAt', '시작일', '시작날짜', '시작 날짜']));
+
     var book = {
       id: str(firstOf(raw, ['id', 'key', '_id', 'bookId'])) || newId(),
       title: title,
       author: str(firstOf(raw, ['author', '저자', 'writer', 'authors', 'authorName'])),
       category: str(firstOf(raw, ['category', '카테고리', 'genre', 'type'])) || '기타',
-      finishedAt: toDate(firstOf(raw, ['finishedAt', 'date', '완독일', 'readDate', 'finished', 'doneAt', 'endDate', 'readAt'])),
+      startDate: startDate,
+      endDate: endDate,
+      status: normalizeStatus(firstOf(raw, ['status', '상태', 'state', 'readStatus', '읽기상태'])),
       cover: str(firstOf(raw, ['cover', 'coverUrl', 'coverURL', 'image', 'imageUrl', 'thumbnail', 'thumbnailUrl', '표지'])) || '',
       memo: str(firstOf(raw, ['memo', 'comment', '한줄평', '한 줄 평', 'review', 'note', 'oneLine', 'summary'])),
       heart: toBool(firstOf(raw, ['heart', 'favorite', 'liked', 'isHeart', 'love', 'like'])),
       quotes: normalizeQuotes(firstOf(raw, ['quotes', 'quoteList', 'highlights', 'passages', '문구', '구절']))
     };
+    /* 예전 코드가 읽을 수 있도록 끝난 날짜를 finishedAt으로도 함께 남겨 둡니다. */
+    book.finishedAt = endDate;
     if (raw.createdAt) book.createdAt = str(raw.createdAt);
     if (raw.sample) book.sample = true;
     return book;
@@ -142,7 +164,9 @@
     (remote || []).forEach(function (b) {
       if (!b || !b.id || deleted[b.id]) return;
       var base = normalizeBook(b) || b;
-      var merged = edits[b.id] ? normalizeBook(Object.assign({}, base, edits[b.id])) || base : base;
+      /* 저장된 수정 내역도 먼저 표준 형식으로 바꿔야 예전 finishedAt만 있는 기록도 날짜가 살아납니다. */
+      var edit = edits[b.id] ? (normalizeBook(edits[b.id]) || edits[b.id]) : null;
+      var merged = edit ? normalizeBook(Object.assign({}, base, edit)) || base : base;
       if (!map[b.id]) order.push(b.id);
       map[b.id] = merged;
     });
@@ -159,7 +183,7 @@
   /* 최근에 읽은 책이 먼저 오도록 정렬 */
   function sortBooks(books) {
     return books.slice().sort(function (a, b) {
-      var da = a.finishedAt || '', db = b.finishedAt || '';
+      var da = a.endDate || a.startDate || '', db = b.endDate || b.startDate || '';
       if (da !== db) return da < db ? 1 : -1;
       var ca = a.createdAt || '', cb = b.createdAt || '';
       if (ca !== cb) return ca < cb ? 1 : -1;
@@ -167,10 +191,11 @@
     });
   }
 
+  /* 완독 통계는 상태가 '완독'인 책만 셉니다. 중단·읽는 중은 따로 셉니다. */
   function computeStats(books, now) {
     now = now || new Date();
     var currentYear = now.getFullYear();
-    var total = 0, thisYear = 0, hearts = 0;
+    var total = 0, thisYear = 0, hearts = 0, stopped = 0, reading = 0, undated = 0;
     var years = {}, months = {}, cats = {};
 
     books.forEach(function (b) {
@@ -178,10 +203,14 @@
       var cat = b.category || '기타';
       cats[cat] = (cats[cat] || 0) + 1;
 
-      if (!b.finishedAt) return;
+      var status = normalizeStatus(b.status);
+      if (status === STATUS.STOPPED) { stopped++; return; }
+      if (status === STATUS.READING) { reading++; return; }
+
       total++;
-      var y = b.finishedAt.slice(0, 4);
-      var m = b.finishedAt.slice(0, 7);
+      if (!b.endDate) { undated++; return; }
+      var y = b.endDate.slice(0, 4);
+      var m = b.endDate.slice(0, 7);
       if (Number(y) === currentYear) thisYear++;
       years[y] = (years[y] || 0) + 1;
       months[m] = (months[m] || 0) + 1;
@@ -206,6 +235,9 @@
       total: total,
       thisYear: thisYear,
       hearts: hearts,
+      stopped: stopped,
+      reading: reading,
+      undated: undated,
       count: bookCount,
       years: rows(years, function (k) { return k + '년'; }),
       months: rows(months, function (k) { return k; }),
@@ -261,7 +293,11 @@
       title: b.title,
       author: b.author || '',
       category: b.category || '기타',
-      finishedAt: b.finishedAt || '',
+      startDate: b.startDate || '',
+      endDate: b.endDate || '',
+      /* 예전 버전과도 호환되도록 끝난 날짜를 finishedAt에도 같이 담습니다. */
+      finishedAt: b.endDate || '',
+      status: normalizeStatus(b.status),
       cover: b.cover || '',
       memo: b.memo || '',
       heart: !!b.heart,
@@ -281,6 +317,9 @@
 
   var api = {
     DEFAULT_CATEGORIES: DEFAULT_CATEGORIES,
+    STATUS: STATUS,
+    STATUS_LIST: STATUS_LIST,
+    normalizeStatus: normalizeStatus,
     newId: newId,
     toDate: toDate,
     normalizeBook: normalizeBook,
