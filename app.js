@@ -1493,9 +1493,9 @@
     else lines.push('아직 이 기기는 GitHub와 연결되지 않았어요.');
     lines.push('이 기기 서재 ' + state.books.length + '권');
     if (s.lastSyncAt) lines.push('마지막 동기화 ' + formatSyncTime(s.lastSyncAt));
-    /* 오류는 상태 카드에 그대로 남겨 둡니다(성공 안내는 아래 메시지 줄에). */
-    if (s.message && s.phase === 'error') lines.push(s.message);
     el.syncStateDetail.textContent = lines.join('\n');
+    /* 오류는 아래 메시지 줄에 한 번만 보여 줍니다(자동 동기화가 실패했을 때도). */
+    if (s.phase === 'error' && s.message) showSyncMsg(s.message, 'error');
 
     el.syncUnlink.hidden = !s.connected;
     el.syncConnect.textContent = s.connected ? '지금 동기화' : '동기화 연결 테스트 및 지금 동기화';
