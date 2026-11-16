@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:52:17.724Z",
-  "count": 13,
+  "updatedAt": "2026-11-16T12:52:47.415Z",
+  "count": 14,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -79,6 +79,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
+    },
+    {
+      "id": "e4744cc2-65e5-450c-a6a8-c4d2727e53e6",
+      "title": "눈물을 마시는 새 3",
+      "author": "이영도",
+      "category": "소설",
+      "startDate": "2026-08-01",
+      "endDate": "",
+      "finishedAt": "",
+      "status": "읽는 중",
+      "cover": "https://books.google.com/books/content?id=Wq9PcjjX6_sC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:52:46.513Z",
+      "createdAt": "2026-11-16T12:52:46.513Z"
     },
     {
       "id": "650da914-c797-4cad-b76d-08d0d9b8c2a6",
