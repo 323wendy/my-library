@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:48:39.164Z",
-  "count": 10,
+  "updatedAt": "2026-11-16T12:49:09.420Z",
+  "count": 11,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -79,6 +79,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
+    },
+    {
+      "id": "3b0019a9-5708-4b28-99f9-8550b3430888",
+      "title": "안녕이라 그랬어",
+      "author": "김애란",
+      "category": "소설",
+      "startDate": "2026-04-02",
+      "endDate": "2026-04-20",
+      "finishedAt": "2026-04-20",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=VG9zEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:49:08.518Z",
+      "createdAt": "2026-11-16T12:49:08.518Z"
     },
     {
       "id": "9b32c3b7-24ae-4f5a-a6dc-614bf7c7cd96",
