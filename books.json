@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:51:13.427Z",
-  "count": 12,
+  "updatedAt": "2026-11-16T12:52:14.446Z",
+  "count": 13,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -79,6 +79,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
+    },
+    {
+      "id": "650da914-c797-4cad-b76d-08d0d9b8c2a6",
+      "title": "눈물을 마시는 새2",
+      "author": "이영도",
+      "category": "소설",
+      "startDate": "2026-06-04",
+      "endDate": "2026-07-01",
+      "finishedAt": "2026-07-01",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=9sZ7hndYtxcC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:52:13.545Z",
+      "createdAt": "2026-11-16T12:52:13.545Z"
     },
     {
       "id": "8dd603f2-0601-4c06-aeaf-474ff9b4a22a",
