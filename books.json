@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:46:52.184Z",
-  "count": 7,
+  "updatedAt": "2026-11-16T12:47:31.323Z",
+  "count": 8,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -95,6 +95,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T12:46:07.871Z",
       "createdAt": "2026-11-16T12:46:07.871Z"
+    },
+    {
+      "id": "2fb5592b-7e27-46aa-8617-587ffdb3c218",
+      "title": "네버라이",
+      "author": "프리다 맥파든",
+      "category": "소설",
+      "startDate": "2026-02-16",
+      "endDate": "2026-02-18",
+      "finishedAt": "2026-02-18",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=2hSlEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:47:30.422Z",
+      "createdAt": "2026-11-16T12:47:30.422Z"
     },
     {
       "id": "dff03dcf-5e35-49ad-bb91-e11eaba4ddfc",
