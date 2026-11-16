@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:49:09.420Z",
-  "count": 11,
+  "updatedAt": "2026-11-16T12:49:45.928Z",
+  "count": 12,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -79,6 +79,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
+    },
+    {
+      "id": "8dd603f2-0601-4c06-aeaf-474ff9b4a22a",
+      "title": "여름은 고작 계절",
+      "author": "김서해",
+      "category": "소설",
+      "startDate": "2026-04-28",
+      "endDate": "2026-06-16",
+      "finishedAt": "2026-06-16",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=yFluEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:49:45.025Z",
+      "createdAt": "2026-11-16T12:49:45.025Z"
     },
     {
       "id": "3b0019a9-5708-4b28-99f9-8550b3430888",
