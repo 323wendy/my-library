@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T06:57:40.804Z",
-  "count": 5,
+  "updatedAt": "2026-11-16T12:46:08.774Z",
+  "count": 6,
   "books": [
     {
       "id": "21b838c4-c4ca-4016-a23e-663f7b88901c",
@@ -63,6 +63,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
+    },
+    {
+      "id": "d246b2be-c114-46d4-acab-69539ceacdb2",
+      "title": "프로젝트 헤일메리",
+      "author": "앤디 위어 (Andy Weir)",
+      "category": "소설",
+      "startDate": "2026-01-07",
+      "endDate": "2026-02-21",
+      "finishedAt": "2026-02-21",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=AE0tEAAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:46:07.871Z",
+      "createdAt": "2026-11-16T12:46:07.871Z"
     },
     {
       "id": "dff03dcf-5e35-49ad-bb91-e11eaba4ddfc",
