@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:48:11.504Z",
-  "count": 9,
+  "updatedAt": "2026-11-16T12:48:39.164Z",
+  "count": 10,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -127,6 +127,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T12:47:30.422Z",
       "createdAt": "2026-11-16T12:47:30.422Z"
+    },
+    {
+      "id": "61a19d04-646a-4fc8-8370-74c72ac8130a",
+      "title": "이 지랄맞음이 쌓여 축제가 되겠지",
+      "author": "조승리",
+      "category": "에세이",
+      "startDate": "",
+      "endDate": "",
+      "finishedAt": "",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=ffb-EAAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:48:38.262Z",
+      "createdAt": "2026-11-16T12:48:38.262Z"
     },
     {
       "id": "dff03dcf-5e35-49ad-bb91-e11eaba4ddfc",
