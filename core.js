@@ -145,6 +145,8 @@
     /* 예전 코드가 읽을 수 있도록 끝난 날짜를 finishedAt으로도 함께 남겨 둡니다. */
     book.finishedAt = endDate;
     if (raw.createdAt) book.createdAt = str(raw.createdAt);
+    var updatedAt = str(firstOf(raw, ['updatedAt', 'modifiedAt', 'changedAt']));
+    if (updatedAt) book.updatedAt = updatedAt;
     if (raw.sample) book.sample = true;
     return book;
   }
@@ -305,6 +307,118 @@
     };
   }
 
+  /* ---------- 기기 간 동기화(books.json)용 도우미 ---------- */
+
+  /* 책을 고칠 때마다 붙이는 수정 시각. 같은 책을 두 기기에서 고쳤을 때
+     더 최근에 고친 쪽을 고르는 기준이 됩니다. */
+  function stamp(book) {
+    var copy = Object.assign({}, book);
+    copy.updatedAt = new Date().toISOString();
+    return copy;
+  }
+
+  function timeOf(book) {
+    if (!book) return 0;
+    var t = Date.parse(str(book.updatedAt || book.createdAt));
+    return isNaN(t) ? 0 : t;
+  }
+
+  /* 이 기기 서재(local)와 원격 books.json(remote)을 id 기준으로 합칩니다.
+     - 같은 책은 더 최근에 고친 쪽(updatedAt)을 씁니다.
+     - 내가 지운 책(deletedIds)은 되살리지 않습니다.
+     - 마지막으로 알던 원격 목록(seenRemote)에는 있었는데 지금 원격에 없는 책은
+       다른 기기에서 지운 것으로 보고 이 기기에서도 지웁니다(removed로 알려줌). */
+  function mergeForSync(local, remote, deletedIds, seenRemote) {
+    var deleted = {};
+    (deletedIds || []).forEach(function (id) { if (id) deleted[id] = true; });
+
+    var remoteList = (remote || []).filter(function (b) { return b && b.id && !deleted[b.id]; });
+    var remoteIds = {};
+    remoteList.forEach(function (b) { remoteIds[b.id] = true; });
+
+    var removed = [];
+    /* 원격이 통째로 비어 있으면 사고일 수 있으니 지움 판단을 하지 않습니다. */
+    if (remoteList.length) {
+      (seenRemote || []).forEach(function (id) {
+        if (id && !remoteIds[id] && !deleted[id]) {
+          deleted[id] = true;
+          removed.push(id);
+        }
+      });
+    }
+
+    var map = {};
+    var order = [];
+    remoteList.forEach(function (b) {
+      if (!b || !b.id || deleted[b.id] || map[b.id]) return;
+      map[b.id] = b;
+      order.push(b.id);
+    });
+    (local || []).forEach(function (b) {
+      if (!b || !b.id || deleted[b.id]) return;
+      var known = map[b.id];
+      if (!known) {
+        map[b.id] = b;
+        order.push(b.id);
+        return;
+      }
+      if (timeOf(b) > timeOf(known)) map[b.id] = b;
+    });
+
+    return {
+      books: order.map(function (id) { return map[id]; }),
+      removed: removed,
+      deleted: Object.keys(deleted)
+    };
+  }
+
+  /* GitHub books.json에 담을 책 한 권(필드 순서를 고정합니다). */
+  function serializeForRepo(b) {
+    var out = cleanForExport(b);
+    if (b.updatedAt) out.updatedAt = b.updatedAt;
+    if (b.createdAt) out.createdAt = b.createdAt;
+    if (b.sample) out.sample = true;
+    return out;
+  }
+
+  /* 같은 서재인지 견주는 지문. 책 순서를 고정해 내용이 같으면 같은 글자가 됩니다. */
+  function booksFingerprint(books) {
+    return JSON.stringify(sortBooks(books || []).map(serializeForRepo));
+  }
+
+  function repoPayload(books) {
+    var list = sortBooks(books || []).map(serializeForRepo);
+    return JSON.stringify({
+      app: '나만의 서재',
+      version: 2,
+      updatedAt: new Date().toISOString(),
+      count: list.length,
+      books: list
+    }, null, 2) + '\n';
+  }
+
+  /* GitHub Contents API는 파일 내용을 base64(UTF-8)로 주고받습니다. */
+  function utf8ToBase64(text) {
+    var s = String(text === null || text === undefined ? '' : text);
+    if (typeof root.btoa !== 'function' || typeof root.TextEncoder !== 'function') return '';
+    var bytes = new root.TextEncoder().encode(s);
+    var bin = '';
+    for (var i = 0; i < bytes.length; i += 0x8000) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    }
+    return root.btoa(bin);
+  }
+
+  function base64ToUtf8(b64) {
+    var s = String(b64 || '').replace(/\s+/g, '');
+    if (!s) return '';
+    if (typeof root.atob !== 'function' || typeof root.TextDecoder !== 'function') return '';
+    var bin = root.atob(s);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new root.TextDecoder('utf-8').decode(bytes);
+  }
+
   function exportPayload(books) {
     return JSON.stringify({
       app: '나만의 서재',
@@ -327,6 +441,14 @@
     normalizeQuotes: normalizeQuotes,
     pageLabel: pageLabel,
     mergeLibrary: mergeLibrary,
+    mergeForSync: mergeForSync,
+    stamp: stamp,
+    timeOf: timeOf,
+    serializeForRepo: serializeForRepo,
+    booksFingerprint: booksFingerprint,
+    repoPayload: repoPayload,
+    utf8ToBase64: utf8ToBase64,
+    base64ToUtf8: base64ToUtf8,
     sortBooks: sortBooks,
     computeStats: computeStats,
     parseImport: parseImport,

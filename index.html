@@ -35,6 +35,10 @@
       <button type="button" class="btn-primary" id="btn-add">+ 책 등록</button>
     </div>
 
+    <button type="button" class="sync-pill" id="btn-sync" data-state="off" aria-label="동기화 설정 열기">
+      <span class="sync-pill-label" id="sync-label">☁️ 동기화 미연결</span>
+    </button>
+
     <div class="search">
       <span class="search-icon" aria-hidden="true">🔍</span>
       <input type="search" id="search" placeholder="책 제목, 저자, 한 줄 평, 문구 검색..." autocomplete="off" enterkeyhint="search" aria-label="책 제목, 저자, 한 줄 평, 문구 검색">
@@ -241,6 +245,57 @@
   </div>
 </div>
 
+<!-- 기기 간 동기화 -->
+<div class="modal" id="sync-modal" hidden>
+  <div class="sheet full" role="dialog" aria-modal="true" aria-labelledby="sync-heading">
+    <div class="sheet-head">
+      <h2 id="sync-heading">☁️ 기기 간 동기화</h2>
+      <button type="button" class="icon-btn" id="sync-close" aria-label="닫기">×</button>
+    </div>
+    <div class="form-body sync-body">
+      <p class="sync-lead">폰과 PC에서 같은 서재를 함께 써요. 책을 더하거나 고치면 GitHub 저장소의 <b>books.json</b>에 바로 저장되고, 다른 기기에서도 그대로 보여요.</p>
+
+      <div class="sync-status" id="sync-status-card">
+        <span class="sync-dot" id="sync-dot" data-state="off" aria-hidden="true"></span>
+        <div class="sync-status-text">
+          <strong id="sync-state-text">☁️ 동기화 미연결</strong>
+          <p id="sync-state-detail"></p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="sync-repo">저장소</label>
+        <input class="input" id="sync-repo" type="text" value="323wendy/my-library" autocomplete="off" spellcheck="false" placeholder="아이디/저장소">
+      </div>
+
+      <div class="field">
+        <label for="sync-token">GitHub 토큰 (Personal access token)</label>
+        <input class="input" id="sync-token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_… 또는 github_pat_…">
+        <p class="field-hint"><a href="https://github.com/settings/tokens/new?description=my-library-sync&amp;scopes=repo" target="_blank" rel="noopener noreferrer">🔑 GitHub에서 토큰 만들기</a> — 권한은 <b>repo</b>만 체크하면 돼요.</p>
+        <p class="field-hint">토큰은 이 기기 브라우저에만 저장되고, 서재 데이터나 저장소에는 담기지 않아요.</p>
+      </div>
+
+      <p class="sync-msg" id="sync-msg" role="status" aria-live="polite"></p>
+
+      <details class="sync-help">
+        <summary>토큰은 이렇게 만들면 돼요</summary>
+        <ol>
+          <li>위의 <b>GitHub에서 토큰 만들기</b>를 누르면 새 토큰 화면이 열려요.</li>
+          <li><b>repo</b> 권한을 체크하고 아래쪽 <b>Generate token</b>을 눌러요.</li>
+          <li>나오는 <b>ghp_…</b> 값을 복사해 위 칸에 붙여넣고 <b>동기화 연결 테스트 및 지금 동기화</b>를 눌러요.</li>
+          <li>다른 기기에서도 한 번만 같은 방법으로 연결하면, 그때부터는 양쪽이 자동으로 맞춰져요.</li>
+        </ol>
+        <p>토큰을 끊고 싶으면 <b>연결 해제</b>를 누르면 돼요. 서재 데이터는 이 기기에 그대로 남아요.</p>
+        <p>이 저장소는 공개 저장소라, 올린 서재 목록(책 제목·한 줄 평·문구)은 누구나 볼 수 있어요. 공개하고 싶지 않으면 비공개 저장소를 하나 만들어 위 <b>저장소</b> 칸에 그 이름을 적으면 돼요.</p>
+      </details>
+    </div>
+    <div class="sheet-actions sync-actions">
+      <button type="button" class="btn-soft" id="sync-unlink" hidden>연결 해제</button>
+      <button type="button" class="btn-primary wide" id="sync-connect">동기화 연결 테스트 및 지금 동기화</button>
+    </div>
+  </div>
+</div>
+
 <!-- 확인 대화상자 -->
 <div class="modal center" id="confirm-modal" hidden>
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
@@ -256,6 +311,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="core.js"></script>
+<script src="sync.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

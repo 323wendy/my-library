@@ -1,10 +1,11 @@
 /* 나만의 서재 — 오프라인 캐시 (앱 껍데기만 저장, books.json은 항상 새로 확인) */
-const CACHE = 'shelf-v3';
+const CACHE = 'shelf-v4';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './core.js',
+  './sync.js',
   './app.js',
   './manifest.webmanifest',
   './icon.svg',

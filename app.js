@@ -32,6 +32,8 @@
   var openStack = [];
   var confirmResolve = null;
   var toastTimer = null;
+  var syncApplying = false;
+  var SNAP_KEY = 'reading-app:v1:snapshot';
 
   /* ---------------- 저장소 ---------------- */
 
@@ -48,6 +50,7 @@
         edits: (d.edits && typeof d.edits === 'object') ? d.edits : {},
         added: Array.isArray(d.added) ? d.added.map(C.normalizeBook).filter(Boolean) : [],
         deleted: Array.isArray(d.deleted) ? d.deleted.filter(Boolean) : [],
+        seenRemote: Array.isArray(d.seenRemote) ? d.seenRemote.filter(Boolean) : [],
         hideSampleNote: !!d.hideSampleNote
       };
     } catch (e) {
@@ -60,6 +63,26 @@
       localStorage.setItem(LS_KEY, JSON.stringify(state.store));
     } catch (e) {
       toast('이 브라우저에는 저장이 안 돼요. 통계 탭에서 데이터를 복사해 두세요.');
+    }
+    /* 동기화가 연결돼 있으면 GitHub에도 바로 반영합니다. */
+    if (!syncApplying && window.ShelfSync) window.ShelfSync.notifyLocalChange();
+  }
+
+  /* 마지막으로 보던 서재를 하나 더 남겨 둡니다(인터넷이 끊겨도 서재가 비어 보이지 않게). */
+  function saveSnapshot() {
+    try {
+      localStorage.setItem(SNAP_KEY, JSON.stringify({ savedAt: new Date().toISOString(), books: state.books }));
+    } catch (e) { /* noop */ }
+  }
+
+  function loadSnapshot() {
+    try {
+      var d = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null');
+      if (!d || !Array.isArray(d.books)) return null;
+      var books = d.books.map(C.normalizeBook).filter(Boolean);
+      return books.length ? books : null;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -139,6 +162,7 @@
     renderGrid();
     renderStats();
     renderSampleNote();
+    saveSnapshot();
   }
 
   function renderSummary() {
@@ -1087,6 +1111,7 @@
   }
 
   function upsertLocal(book) {
+    book = C.stamp(book);
     var store = state.store;
     var i = -1;
     for (var k = 0; k < store.added.length; k++) {
@@ -1330,24 +1355,213 @@
     toast(books.length + '권을 불러왔어요.');
   }
 
-  /* ---------------- 공용 서재(books.json) ---------------- */
+  /* ---------------- 공용 서재(books.json) + 기기 간 동기화 ---------------- */
+
+  /* 동기화 엔진이 이 기기의 서재를 볼 때 쓰는 값 */
+  function syncLocal() {
+    state.books = C.mergeLibrary(state.remote, state.store);
+    return {
+      books: state.books.slice(),
+      deleted: (state.store.deleted || []).slice(),
+      seenRemote: (state.store.seenRemote || []).slice()
+    };
+  }
+
+  /* 동기화 엔진이 원격 books.json을 읽어 왔을 때 화면·저장소를 맞춥니다. */
+  function applySyncLibrary(books, opts) {
+    opts = opts || {};
+    var next = (books || []).map(C.normalizeBook).filter(Boolean);
+    syncApplying = true;
+    try {
+      state.remote = next;
+      state.remoteLoaded = true;
+      if (opts.deleted) {
+        var seen = {};
+        state.store.deleted = opts.deleted.filter(function (id) { if (!id || seen[id]) return false; seen[id] = true; return true; });
+      }
+      if (opts.compact) {
+        /* 원격 books.json이 이제 서재 전체입니다. 이 기기에만 있던 수정은 비워 둡니다. */
+        state.store.edits = {};
+        state.store.added = [];
+        state.store.seenRemote = next.map(function (b) { return b.id; });
+      }
+      saveStore();
+      refresh();
+      if (state.detailId) {
+        var b = findBook(state.detailId);
+        if (b) renderDetail(b);
+        else { closeModal(el.detailModal); state.detailId = null; }
+      }
+    } finally {
+      syncApplying = false;
+    }
+  }
+
+  function applyCdnBooks(data) {
+    var list = Array.isArray(data) ? data : (data && Array.isArray(data.books) ? data.books : []);
+    state.remote = list.map(C.normalizeBook).filter(Boolean);
+    state.remoteLoaded = true;
+    refresh();
+    if (state.detailId) {
+      var b = findBook(state.detailId);
+      if (b) renderDetail(b);
+    }
+  }
 
   function loadRemote() {
+    var sync = window.ShelfSync;
+    if (sync && sync.getStatus().connected) {
+      /* 토큰이 있으면 GitHub API로 바로 최신본을 받아 오고, 이 기기의 변경도 함께 올립니다. */
+      sync.start();
+      return;
+    }
+    loadRemoteFromCdn();
+    startCdnPolling();
+  }
+
+  var cdnTimer = null;
+
+  function startCdnPolling() {
+    if (cdnTimer) return;
+    cdnTimer = setInterval(function () {
+      if (document.hidden) return;
+      if (window.ShelfSync && window.ShelfSync.getStatus().connected) return;
+      loadRemoteFromCdn();
+    }, 60000);
+  }
+
+  /* 토큰이 없는 기기: GitHub Pages가 주는 books.json을 캐시 없이 새로 받아 옵니다. */
+  function loadRemoteFromCdn() {
     fetch('books.json?t=' + Date.now(), { cache: 'no-store' })
       .then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
       })
-      .then(function (data) {
-        var list = Array.isArray(data) ? data : (data && Array.isArray(data.books) ? data.books : []);
-        state.remote = list.map(C.normalizeBook).filter(Boolean);
-        state.remoteLoaded = true;
-        refresh();
-      })
+      .then(applyCdnBooks)
       .catch(function () {
+        var snap = loadSnapshot();
+        state.remote = snap || state.remote || [];
         state.remoteLoaded = true;
         refresh();
       });
+  }
+
+  /* ---------------- 동기화 화면 ---------------- */
+
+  var SYNC_LABELS = {
+    off: '☁️ 동기화 미연결',
+    syncing: '🔄 동기화 중...',
+    synced: '☁️ 동기화됨',
+    error: '⚠️ 동기화 오류'
+  };
+
+  function formatSyncTime(iso) {
+    var d = iso ? new Date(iso) : null;
+    if (!d || isNaN(d.getTime())) return '';
+    var now = new Date();
+    var hm = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    var sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+    var yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    var isYesterday = d.getFullYear() === yesterday.getFullYear() && d.getMonth() === yesterday.getMonth() && d.getDate() === yesterday.getDate();
+    if (sameDay) return '오늘 ' + hm;
+    if (isYesterday) return '어제 ' + hm;
+    return (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + hm;
+  }
+
+  function renderSyncBadge(s) {
+    if (!el.btnSync) return;
+    s = s || window.ShelfSync.getStatus();
+    var label = SYNC_LABELS[s.phase] || SYNC_LABELS.off;
+    el.syncLabel.textContent = label;
+    el.btnSync.setAttribute('data-state', s.phase);
+    var when = s.lastSyncAt ? formatSyncTime(s.lastSyncAt) : '';
+    el.btnSync.setAttribute('aria-label', label + ' — 눌러서 동기화 설정을 열어요');
+    el.btnSync.title = s.connected
+      ? (label + (when ? ' · 마지막 ' + when : '') + ' · ' + s.repo)
+      : '기기 간 동기화를 연결해 보세요';
+  }
+
+  function renderSyncModal(s) {
+    if (!el.syncModal) return;
+    s = s || window.ShelfSync.getStatus();
+    var label = SYNC_LABELS[s.phase] || SYNC_LABELS.off;
+    el.syncStateText.textContent = label;
+    el.syncDot.setAttribute('data-state', s.phase);
+
+    var lines = [];
+    if (s.connected) lines.push('저장소 ' + s.repo + ' · books.json');
+    else lines.push('아직 이 기기는 GitHub와 연결되지 않았어요.');
+    lines.push('이 기기 서재 ' + state.books.length + '권');
+    if (s.lastSyncAt) lines.push('마지막 동기화 ' + formatSyncTime(s.lastSyncAt));
+    if (s.message) lines.push(s.message);
+    el.syncStateDetail.textContent = lines.join('\n');
+
+    el.syncUnlink.hidden = !s.connected;
+    el.syncConnect.textContent = s.connected ? '지금 동기화' : '동기화 연결 테스트 및 지금 동기화';
+  }
+
+  function openSyncModal() {
+    var s = window.ShelfSync.getStatus();
+    el.syncRepo.value = s.repo || window.ShelfSync.DEFAULT_REPO;
+    el.syncToken.value = '';
+    el.syncToken.placeholder = s.connected ? '저장된 토큰 사용 중 (바꾸려면 새 토큰 입력)' : 'ghp_… 또는 github_pat_…';
+    showSyncMsg('', '');
+    renderSyncModal(s);
+    openModal(el.syncModal);
+  }
+
+  function showSyncMsg(text, tone) {
+    if (!el.syncMsg) return;
+    el.syncMsg.textContent = text || '';
+    el.syncMsg.className = 'sync-msg' + (tone ? ' ' + tone : '');
+    el.syncMsg.hidden = !text;
+  }
+
+  function connectSync() {
+    var sync = window.ShelfSync;
+    var s = sync.getStatus();
+    var token = el.syncToken.value.trim();
+    var repo = el.syncRepo.value.trim();
+    if (!token && !s.connected) {
+      showSyncMsg('토큰을 먼저 만들어 붙여넣어 주세요. 위 링크에서 바로 만들 수 있어요.', 'error');
+      el.syncToken.focus();
+      return;
+    }
+    el.syncConnect.disabled = true;
+    showSyncMsg('연결을 확인하고 서재를 맞추는 중이에요…', '');
+    sync.connect({ token: token, repo: repo }).then(function (r) {
+      el.syncConnect.disabled = false;
+      el.syncToken.value = '';
+      renderSyncModal(sync.getStatus());
+      if (!r || !r.ok) {
+        showSyncMsg((r && r.message) || '동기화하지 못했어요.', 'error');
+        return;
+      }
+      var n = r.count || 0;
+      if (r.pushed) {
+        toast('동기화 연결 완료! ' + n + '권을 GitHub에 올렸어요.');
+        showSyncMsg(n + '권을 GitHub에 올렸어요. 이제 다른 기기와 자동으로 맞춰져요.', 'ok');
+      } else {
+        toast('동기화 연결 완료! 서재 ' + n + '권이 최신이에요.');
+        showSyncMsg('이미 최신 상태예요. 서재 ' + n + '권을 확인했어요.', 'ok');
+      }
+    });
+  }
+
+  function unlinkSync() {
+    confirmDialog({
+      title: '동기화 연결을 끊을까요?',
+      message: '이 기기에서만 GitHub와 연결을 끊어요.\n서재 데이터와 다른 기기의 동기화는 그대로 남아요.',
+      okText: '연결 해제'
+    }).then(function (ok) {
+      if (!ok) return;
+      window.ShelfSync.disconnect();
+      el.syncToken.value = '';
+      el.syncToken.placeholder = 'ghp_… 또는 github_pat_…';
+      renderSyncModal();
+      showSyncMsg('연결을 끊었어요. 서재 데이터는 이 기기에 그대로 있어요.', 'ok');
+      toast('동기화 연결을 끊었어요.');
+    });
   }
 
   function registerSW() {
@@ -1362,6 +1576,13 @@
 
   function bindEvents() {
     el.btnAdd.addEventListener('click', function () { openForm(null); });
+    el.btnSync.addEventListener('click', openSyncModal);
+    el.syncClose.addEventListener('click', function () { closeModal(el.syncModal); });
+    el.syncConnect.addEventListener('click', connectSync);
+    el.syncUnlink.addEventListener('click', unlinkSync);
+    el.syncToken.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); connectSync(); }
+    });
     el.emptyAdd.addEventListener('click', function () { openForm(null); });
     el.btnCopy.addEventListener('click', copyData);
     el.btnImport.addEventListener('click', openImport);
@@ -1552,6 +1773,18 @@
     el = {
       summary: $('summary'),
       btnAdd: $('btn-add'),
+      btnSync: $('btn-sync'),
+      syncLabel: $('sync-label'),
+      syncModal: $('sync-modal'),
+      syncClose: $('sync-close'),
+      syncRepo: $('sync-repo'),
+      syncToken: $('sync-token'),
+      syncDot: $('sync-dot'),
+      syncStateText: $('sync-state-text'),
+      syncStateDetail: $('sync-state-detail'),
+      syncMsg: $('sync-msg'),
+      syncConnect: $('sync-connect'),
+      syncUnlink: $('sync-unlink'),
       search: $('search'),
       searchClear: $('search-clear'),
       tabLibrary: $('tab-library'),
@@ -1623,7 +1856,19 @@
 
     bindEvents();
     setTab('library');
+    var snap = loadSnapshot();
+    if (snap) state.remote = snap;  /* 지난번 서재를 먼저 보여 주고, 아래에서 최신으로 갈아 끼웁니다 */
     refresh();
+    if (window.ShelfSync) {
+      window.ShelfSync.init({
+        getLocal: syncLocal,
+        applyLibrary: applySyncLibrary,
+        onStatus: function (s) {
+          renderSyncBadge(s);
+          renderSyncModal(s);
+        }
+      });
+    }
     loadRemote();
     registerSW();
   }
