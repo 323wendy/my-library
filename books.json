@@ -1,7 +1,7 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T06:53:05.567Z",
+  "updatedAt": "2026-11-16T06:53:18.686Z",
   "count": 5,
   "books": [
     {
@@ -9,9 +9,9 @@
       "title": "한국사 이상현상 연구원",
       "author": "최인서",
       "category": "소설",
-      "startDate": "2026-11-16",
-      "endDate": "",
-      "finishedAt": "",
+      "startDate": "2026-10-01",
+      "endDate": "2026-11-16",
+      "finishedAt": "2026-11-16",
       "status": "읽는 중",
       "cover": "https://contents.kyobobook.co.kr/sih/fit-in/458x0/pdt/9791124137635.jpg",
       "memo": "",
@@ -30,7 +30,7 @@
           "page": "497"
         }
       ],
-      "updatedAt": "2026-11-16T06:53:04.665Z",
+      "updatedAt": "2026-11-16T06:53:17.850Z",
       "createdAt": "2026-11-16T04:39:46Z"
     },
     {
