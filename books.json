@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:53:55.417Z",
-  "count": 15,
+  "updatedAt": "2026-11-16T12:54:26.914Z",
+  "count": 16,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -95,6 +95,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T12:53:54.515Z",
       "createdAt": "2026-11-16T12:53:54.514Z"
+    },
+    {
+      "id": "7b234248-3646-4d1b-9b15-9ce84d7d9ae0",
+      "title": "아몬드",
+      "author": "손원평",
+      "category": "소설",
+      "startDate": "2026-08-29",
+      "endDate": "2026-08-29",
+      "finishedAt": "2026-08-29",
+      "status": "완독",
+      "cover": "https://covers.openlibrary.org/b/id/11654300-L.jpg",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:54:26.012Z",
+      "createdAt": "2026-11-16T12:54:26.012Z"
     },
     {
       "id": "e4744cc2-65e5-450c-a6a8-c4d2727e53e6",
