@@ -1,7 +1,7 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T06:53:21.112Z",
+  "updatedAt": "2026-11-16T06:57:40.804Z",
   "count": 5,
   "books": [
     {
@@ -12,7 +12,7 @@
       "startDate": "2026-10-01",
       "endDate": "2026-11-16",
       "finishedAt": "2026-11-16",
-      "status": "읽는 중",
+      "status": "완독",
       "cover": "https://contents.kyobobook.co.kr/sih/fit-in/458x0/pdt/9791124137635.jpg",
       "memo": "",
       "heart": true,
@@ -30,7 +30,7 @@
           "page": "497"
         }
       ],
-      "updatedAt": "2026-11-16T06:53:19.619Z",
+      "updatedAt": "2026-11-16T06:57:39.902Z",
       "createdAt": "2026-11-16T04:39:46Z"
     },
     {
