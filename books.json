@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:56:13.265Z",
-  "count": 19,
+  "updatedAt": "2026-11-16T12:56:44.679Z",
+  "count": 20,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -79,6 +79,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
+    },
+    {
+      "id": "a8ee489a-e713-49f5-abc2-9021d7b9eb5a",
+      "title": "키르케",
+      "author": "매들린 밀러",
+      "category": "소설",
+      "startDate": "2026-10-01",
+      "endDate": "2026-11-07",
+      "finishedAt": "2026-11-07",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=SqHoDwAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": true,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:56:43.777Z",
+      "createdAt": "2026-11-16T12:56:43.776Z"
     },
     {
       "id": "3b2bd0f3-c04a-4b02-a545-faabd5c87b00",
