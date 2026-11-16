@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:54:57.211Z",
-  "count": 17,
+  "updatedAt": "2026-11-16T12:55:24.398Z",
+  "count": 18,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -79,6 +79,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
+    },
+    {
+      "id": "b0bc9ece-2426-49f7-91ef-4029f5b6735f",
+      "title": "작은 빛을 따라서",
+      "author": "권여름",
+      "category": "소설",
+      "startDate": "2026-11-01",
+      "endDate": "",
+      "finishedAt": "",
+      "status": "완독",
+      "cover": "",
+      "memo": "",
+      "heart": true,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:55:23.497Z",
+      "createdAt": "2026-11-16T12:55:23.497Z"
     },
     {
       "id": "d11035b7-816e-43e3-9f2f-bfe09fd53e07",
