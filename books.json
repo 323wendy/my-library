@@ -1,7 +1,7 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:49:57.829Z",
+  "updatedAt": "2026-11-16T12:50:02.320Z",
   "count": 12,
   "books": [
     {
@@ -187,9 +187,9 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=oCkRvMFSWjkC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": false,
+      "heart": true,
       "quotes": [],
-      "updatedAt": "2026-11-16T03:46:47.672Z",
+      "updatedAt": "2026-11-16T12:50:01.418Z",
       "createdAt": "2026-11-16T03:46:47.672Z"
     },
     {
