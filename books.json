@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:52:47.415Z",
-  "count": 14,
+  "updatedAt": "2026-11-16T12:53:55.417Z",
+  "count": 15,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -79,6 +79,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
+    },
+    {
+      "id": "2d69807e-edb8-435d-a45a-ae08fc103ff0",
+      "title": "어두운 바다의 등불이 되어",
+      "author": "연산호",
+      "category": "웹소설",
+      "startDate": "2026-08-03",
+      "endDate": "2026-09-06",
+      "finishedAt": "2026-09-06",
+      "status": "완독",
+      "cover": "",
+      "memo": "",
+      "heart": true,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:53:54.515Z",
+      "createdAt": "2026-11-16T12:53:54.514Z"
     },
     {
       "id": "e4744cc2-65e5-450c-a6a8-c4d2727e53e6",
