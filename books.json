@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:56:44.679Z",
-  "count": 20,
+  "updatedAt": "2026-11-16T13:10:44Z",
+  "count": 21,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -335,6 +335,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T12:48:38.262Z",
       "createdAt": "2026-11-16T12:48:38.262Z"
+    },
+    {
+      "id": "594e1111-1c2d-41af-bbc8-bc0944a2b1ab",
+      "title": "그저 여명일 뿐",
+      "author": "강기 (원작 우지혜)",
+      "category": "웹툰",
+      "startDate": "2026-01-13",
+      "endDate": "2026-01-15",
+      "finishedAt": "2026-01-15",
+      "status": "완독",
+      "cover": "https://img.ridicdn.net/cover/1746020571/xxlarge",
+      "memo": "",
+      "heart": true,
+      "quotes": [],
+      "updatedAt": "2026-11-16T13:10:44Z",
+      "createdAt": "2026-11-16T13:10:44Z"
     }
   ]
 }
