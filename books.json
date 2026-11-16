@@ -1,7 +1,7 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:50:44.697Z",
+  "updatedAt": "2026-11-16T12:51:13.427Z",
   "count": 12,
   "books": [
     {
@@ -177,6 +177,22 @@
       "createdAt": "2026-11-16T12:47:30.422Z"
     },
     {
+      "id": "64d58bb9-fa49-49ef-9d94-67166e4fd3ef",
+      "title": "차일드호더",
+      "author": "프리다 맥파든",
+      "category": "소설",
+      "startDate": "2026-01-03",
+      "endDate": "2026-01-07",
+      "finishedAt": "2026-01-07",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=UZ2jEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:51:12.524Z",
+      "createdAt": "2026-11-14T07:51:12.290Z"
+    },
+    {
       "id": "61a19d04-646a-4fc8-8370-74c72ac8130a",
       "title": "이 지랄맞음이 쌓여 축제가 되겠지",
       "author": "조승리",
@@ -191,21 +207,6 @@
       "quotes": [],
       "updatedAt": "2026-11-16T12:48:38.262Z",
       "createdAt": "2026-11-16T12:48:38.262Z"
-    },
-    {
-      "id": "64d58bb9-fa49-49ef-9d94-67166e4fd3ef",
-      "title": "차일드호더",
-      "author": "프리다 맥파든",
-      "category": "소설",
-      "startDate": "",
-      "endDate": "",
-      "finishedAt": "",
-      "status": "완독",
-      "cover": "https://books.google.com/books/content?id=UZ2jEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
-      "memo": "",
-      "heart": false,
-      "quotes": [],
-      "createdAt": "2026-11-14T07:51:12.290Z"
     }
   ]
 }
