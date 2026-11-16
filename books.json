@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:55:24.398Z",
-  "count": 18,
+  "updatedAt": "2026-11-16T12:56:13.265Z",
+  "count": 19,
   "books": [
     {
       "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
@@ -79,6 +79,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
+    },
+    {
+      "id": "3b2bd0f3-c04a-4b02-a545-faabd5c87b00",
+      "title": "악마는 열심히 산다",
+      "author": "김화진",
+      "category": "소설",
+      "startDate": "2026-11-01",
+      "endDate": "2026-11-07",
+      "finishedAt": "2026-11-07",
+      "status": "완독",
+      "cover": "https://covers.openlibrary.org/b/isbn/9788937473005-L.jpg?default=false",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:56:12.364Z",
+      "createdAt": "2026-11-16T12:56:12.364Z"
     },
     {
       "id": "b0bc9ece-2426-49f7-91ef-4029f5b6735f",
