@@ -1,9 +1,31 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T03:46:48.575Z",
-  "count": 4,
+  "updatedAt": "2026-11-16T04:39:46Z",
+  "count": 5,
   "books": [
+    {
+      "id": "21b838c4-c4ca-4016-a23e-663f7b88901c",
+      "title": "한국사 이상현상 연구원",
+      "author": "최인서",
+      "category": "소설",
+      "startDate": "2026-11-16",
+      "endDate": "",
+      "finishedAt": "",
+      "status": "읽는 중",
+      "cover": "https://contents.kyobobook.co.kr/sih/fit-in/458x0/pdt/9791124137635.jpg",
+      "memo": "",
+      "heart": false,
+      "quotes": [
+        {
+          "id": "6c8dada2-9f60-4bce-bb27-ecd171b32210",
+          "text": "범에게 잡아먹히는 노루들도 죄는 없지. 그렇다고 범이 사냥을 그만두던가.",
+          "createdAt": "2026-11-16T04:39:46Z",
+          "page": "221"
+        }
+      ],
+      "createdAt": "2026-11-16T04:39:46Z"
+    },
     {
       "id": "37535b41-d262-4377-af16-1bf74340d8a3",
       "title": "용궁장의 고백",
