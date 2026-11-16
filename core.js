@@ -182,11 +182,27 @@
     return order.map(function (id) { return map[id]; });
   }
 
-  /* 최근에 읽은 책이 먼저 오도록 정렬 */
+  /* 정렬: '읽는 중'인 책이 항상 맨 앞, 그다음은 읽은 날짜가 최근인 책부터.
+     - 읽는 중끼리는 시작일(없으면 등록한 날짜) 최신 순
+     - 완독·중단은 끝난 날짜 → 시작일 최신 순, 날짜가 아예 없는 책은 맨 뒤
+     - 그래도 같으면 등록한 날짜 최신 순 → 제목 가나다순 */
   function sortBooks(books) {
+    function isReading(b) { return normalizeStatus(b.status) === STATUS.READING; }
+    function readDay(b) { return b.endDate || b.startDate || ''; }
+    function readingDay(b) { return b.startDate || b.createdAt || ''; }
+
     return books.slice().sort(function (a, b) {
-      var da = a.endDate || a.startDate || '', db = b.endDate || b.startDate || '';
-      if (da !== db) return da < db ? 1 : -1;
+      var ra = isReading(a), rb = isReading(b);
+      if (ra !== rb) return ra ? -1 : 1;
+
+      var da = ra ? readingDay(a) : readDay(a);
+      var db = ra ? readingDay(b) : readDay(b);
+      if (da !== db) {
+        if (!da) return 1;
+        if (!db) return -1;
+        return da < db ? 1 : -1;
+      }
+
       var ca = a.createdAt || '', cb = b.createdAt || '';
       if (ca !== cb) return ca < cb ? 1 : -1;
       return String(a.title).localeCompare(String(b.title), 'ko');
