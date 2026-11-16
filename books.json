@@ -1,9 +1,25 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T12:46:08.774Z",
-  "count": 6,
+  "updatedAt": "2026-11-16T12:46:52.184Z",
+  "count": 7,
   "books": [
+    {
+      "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
+      "title": "혼모노",
+      "author": "성해나",
+      "category": "오디오북",
+      "startDate": "2026-01-26",
+      "endDate": "2026-12-02",
+      "finishedAt": "2026-12-02",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=mZNTEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:46:51.282Z",
+      "createdAt": "2026-11-16T12:46:51.282Z"
+    },
     {
       "id": "21b838c4-c4ca-4016-a23e-663f7b88901c",
       "title": "한국사 이상현상 연구원",
