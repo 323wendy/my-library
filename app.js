@@ -1493,7 +1493,8 @@
     else lines.push('아직 이 기기는 GitHub와 연결되지 않았어요.');
     lines.push('이 기기 서재 ' + state.books.length + '권');
     if (s.lastSyncAt) lines.push('마지막 동기화 ' + formatSyncTime(s.lastSyncAt));
-    if (s.message) lines.push(s.message);
+    /* 오류는 상태 카드에 그대로 남겨 둡니다(성공 안내는 아래 메시지 줄에). */
+    if (s.message && s.phase === 'error') lines.push(s.message);
     el.syncStateDetail.textContent = lines.join('\n');
 
     el.syncUnlink.hidden = !s.connected;
@@ -1532,6 +1533,8 @@
     sync.connect({ token: token, repo: repo }).then(function (r) {
       el.syncConnect.disabled = false;
       el.syncToken.value = '';
+      if (r && r.repo) el.syncRepo.value = r.repo;
+      el.syncToken.placeholder = '저장된 토큰 사용 중 (바꾸려면 새 토큰 입력)';
       renderSyncModal(sync.getStatus());
       if (!r || !r.ok) {
         showSyncMsg((r && r.message) || '동기화하지 못했어요.', 'error');
