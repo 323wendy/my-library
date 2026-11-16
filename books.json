@@ -1,8 +1,8 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T03:44:38.183Z",
-  "count": 3,
+  "updatedAt": "2026-11-16T03:46:48.575Z",
+  "count": 4,
   "books": [
     {
       "id": "37535b41-d262-4377-af16-1bf74340d8a3",
@@ -34,6 +34,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
+    },
+    {
+      "id": "dff03dcf-5e35-49ad-bb91-e11eaba4ddfc",
+      "title": "눈물을 마시는 새 1",
+      "author": "이영도",
+      "category": "소설",
+      "startDate": "",
+      "endDate": "",
+      "finishedAt": "",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=oCkRvMFSWjkC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "heart": false,
+      "quotes": [],
+      "updatedAt": "2026-11-16T03:46:47.672Z",
+      "createdAt": "2026-11-16T03:46:47.672Z"
     },
     {
       "id": "64d58bb9-fa49-49ef-9d94-67166e4fd3ef",
