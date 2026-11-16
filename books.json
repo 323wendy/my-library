@@ -1,7 +1,7 @@
 {
   "app": "나만의 서재",
   "version": 2,
-  "updatedAt": "2026-11-16T06:53:18.686Z",
+  "updatedAt": "2026-11-16T06:53:21.112Z",
   "count": 5,
   "books": [
     {
@@ -15,7 +15,7 @@
       "status": "읽는 중",
       "cover": "https://contents.kyobobook.co.kr/sih/fit-in/458x0/pdt/9791124137635.jpg",
       "memo": "",
-      "heart": false,
+      "heart": true,
       "quotes": [
         {
           "id": "6c8dada2-9f60-4bce-bb27-ecd171b32210",
@@ -30,7 +30,7 @@
           "page": "497"
         }
       ],
-      "updatedAt": "2026-11-16T06:53:17.850Z",
+      "updatedAt": "2026-11-16T06:53:19.619Z",
       "createdAt": "2026-11-16T04:39:46Z"
     },
     {
