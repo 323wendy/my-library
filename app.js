@@ -423,11 +423,17 @@
         el.emptyEmoji.textContent = c.empty.emoji;
         el.emptyText.textContent = c.empty.text;
         el.emptyAdd.textContent = c.label + ' 첫 기록 남기기';
+      } else if (state.query.trim()) {
+        el.emptyEmoji.textContent = '🔎';
+        el.emptyText.textContent = '“' + state.query.trim() + '”에 맞는 ' + c.itemWord + '이 없어요.';
+        el.emptyAdd.textContent = c.label + ' 기록 남기기';
+      } else if (isRatingFilter(state.filter)) {
+        el.emptyEmoji.textContent = '⭐';
+        el.emptyText.textContent = '별 ' + ratingOfFilter(state.filter) + '개 준 ' + c.itemWord + '이 아직 없어요.';
+        el.emptyAdd.textContent = c.label + ' 기록 남기기';
       } else {
         el.emptyEmoji.textContent = '🔎';
-        el.emptyText.textContent = state.query.trim()
-          ? '“' + state.query.trim() + '”에 맞는 ' + c.itemWord + '이 없어요.'
-          : '이 분류에는 아직 ' + c.itemWord + '이 없어요.';
+        el.emptyText.textContent = '이 분류에는 아직 ' + c.itemWord + '이 없어요.';
         el.emptyAdd.textContent = c.label + ' 기록 남기기';
       }
     }
