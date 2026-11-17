@@ -1,7 +1,24 @@
 {
   "app": "나만의 기록",
   "version": 1,
-  "updatedAt": "2026-11-17T00:54:39Z",
-  "count": 0,
-  "items": []
+  "updatedAt": "2026-11-17T06:56:39.498Z",
+  "count": 1,
+  "items": [
+    {
+      "id": "56ef6fa6-8ac8-412d-b092-eb81f27df76d",
+      "title": "100일의 거짓말",
+      "creator": "유인식",
+      "kind": "드라마",
+      "startDate": "2026-11-03",
+      "endDate": "",
+      "status": "보는 중",
+      "cover": "https://en.wikipedia.org/wiki/Special:FilePath/100_Days_of_Deception_poster.jpeg?width=400",
+      "note": "",
+      "heart": true,
+      "quotes": [],
+      "link": "",
+      "updatedAt": "2026-11-17T06:56:38.596Z",
+      "createdAt": "2026-11-17T06:56:38.596Z"
+    }
+  ]
 }
