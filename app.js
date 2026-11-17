@@ -38,6 +38,7 @@
   var openStack = [];
   var confirmResolve = null;
   var toastTimer = null;
+  var lookupTimer = null;
   var syncApplying = false;
 
   /* ---------------- 기록 종류 도우미 ---------------- */
@@ -990,8 +991,9 @@
 
   function renderLookup() {
     var L = state.lookup;
+    var c = current();
     el.fLookup.disabled = !!L.busy;
-    el.fLookup.textContent = L.busy ? '🔎 찾는 중…' : '🔍 표지·저자 찾기';
+    el.fLookup.textContent = L.busy ? '🔎 찾는 중…' : (c.lookupLabel || '🔍 표지·저자 찾기');
 
     var showPanel = L.busy || L.items.length > 0 || !!L.message;
     el.fLookupPanel.hidden = !showPanel;
@@ -1003,11 +1005,13 @@
 
     el.fLookupStatus.className = 'lookup-status' + (L.tone ? ' ' + L.tone : '');
     el.fLookupStatus.textContent = L.busy
-      ? '표지와 저자를 찾고 있어요…'
-      : (L.message || '마음에 드는 책을 누르면 제목·저자·표지가 채워져요.');
+      ? (c.lookupBusy || '표지와 저자를 찾고 있어요…')
+      : (L.message || c.lookupHint || '마음에 드는 책을 누르면 제목·저자·표지가 채워져요.');
 
     el.fLookupList.innerHTML = L.items.map(function (item, i) {
       var thumb = item.thumb || item.cover || '';
+      var meta = [item.creator || (c.creatorShort || '저자') + ' 미상', item.year, item.platform || item.kind || item.category]
+        .filter(Boolean).join(' · ');
       return '<li>'
         + '<button type="button" class="lookup-item" data-lookup="' + i + '">'
         + '<span class="lookup-thumb">'
@@ -1015,7 +1019,7 @@
         + '</span>'
         + '<span class="lookup-text">'
         + '<span class="lookup-title">' + esc(item.title) + '</span>'
-        + '<span class="lookup-meta">' + esc([item.creator || '저자 미상', item.year].filter(Boolean).join(' · ')) + '</span>'
+        + '<span class="lookup-meta">' + esc(meta) + '</span>'
         + '</span>'
         + '</button>'
         + '</li>';
@@ -1119,20 +1123,27 @@
   function applyLookupItem(item) {
     if (!item) return;
     var formToken = state.editingId;
+    var c = current();
+    var who = c.creatorShort || '저자';
     el.fTitle.value = item.title;
     if (item.creator) el.fCreator.value = item.creator;
-    if (item.category) renderFormKinds(item.category, false);
+
+    var kindValue = item.kind || item.category || '';
+    if (kindValue && kindList(c).indexOf(kindValue) >= 0) renderFormKinds(kindValue, false);
+    if (item.platform && c.platform) el.fPlatform.value = item.platform;
+    if (item.link && c.link && !el.fLink.value) el.fLink.value = item.link;
+
     el.fTitleError.hidden = true;
     state.lookup = { busy: false, items: [], message: '', tone: '' };
     renderLookup();
 
     if (item.cover) {
       applyCover(item.cover);
-      toast('제목·저자·표지를 채웠어요.');
+      toast('제목·' + who + '·표지를 채웠어요.');
       return;
     }
     if (!item.isbn) {
-      toast('제목과 저자를 채웠어요. 표지는 못 찾았어요.');
+      toast('제목과 ' + who + '를 채웠어요. 표지는 못 찾았어요.');
       return;
     }
 
@@ -1141,10 +1152,785 @@
       if (state.editingId !== formToken || el.formModal.hidden) return;
       if (ok) {
         applyCover(ol);
-        toast('제목·저자·표지를 채웠어요.');
+        toast('제목·' + who + '·표지를 채웠어요.');
       } else {
-        toast('제목과 저자를 채웠어요. 표지는 못 찾았어요.');
+        toast('제목과 ' + who + '를 채웠어요. 표지는 못 찾았어요.');
       }
+    });
+  }
+
+  /* ---------------- 영상 · 웹툰 정보 자동 검색 (제목 → 감독·작가·표지·분야·플랫폼) ----------------
+     서버도 키도 없이 브라우저에서 바로 부를 수 있는 공개 자료만 씁니다.
+       · 위키데이터      : 작품·감독·작가·분야·종류 (origin=*)
+       · 한국어 위키백과 : 포스터 그림·연출·작가·연재처 (origin=*)
+       · 영어 위키백과   : 한국어판에 포스터가 없을 때 보충
+       · AniList         : 웹툰·웹소설 표지와 작가 (CORS)
+       · Google Books    : 단행본으로 나온 작품의 작가·표지 보충 (CORS) */
+
+  var WIKI_API = {
+    ko: 'https://ko.wikipedia.org/w/api.php',
+    en: 'https://en.wikipedia.org/w/api.php'
+  };
+  var WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
+  var ANILIST_API = 'https://graphql.anilist.co';
+  var GBOOKS_FEED_API = 'https://books.google.com/books/feeds/volumes';
+  var ANILIST_QUERY = 'query ($q: String) { Page(perPage: 5) { media(search: $q, type: MANGA, sort: SEARCH_MATCH) {'
+    + ' id title { romaji native english } coverImage { large } format countryOfOrigin'
+    + ' staff(perPage: 3) { edges { role node { name { full native } } } } startDate { year } siteUrl } } }';
+
+  /* 위키데이터 P31(종류) 값 — 작품 종류를 가려낼 때 씁니다. */
+  var FILM_TYPES = ['Q11424', 'Q202866', 'Q93204', 'Q506240', 'Q24856', 'Q29168811', 'Q17517379', 'Q842256'];
+  var SHOW_TYPES = ['Q5398426', 'Q581714', 'Q1259759', 'Q63952888', 'Q117467246'];
+  var PROGRAM_TYPES = ['Q15416', 'Q1261214'];
+  var WEBTOON_TYPES = ['Q74262765', 'Q8274', 'Q1760610', 'Q1004'];
+  var WEBNOVEL_TYPES = ['Q1667921', 'Q8261'];
+
+  var PLATFORM_RULES = [
+    [/네이버\s*웹툰|네이버웹툰|네이버\s*만화/i, '네이버웹툰'],
+    [/네이버\s*시리즈|네이버시리즈/i, '네이버시리즈'],
+    [/카카오\s*페이지|카카오페이지/i, '카카오페이지'],
+    [/카카오\s*웹툰|다음\s*웹툰|만화속세상/i, '카카오웹툰'],
+    [/레진/i, '레진코믹스'],
+    [/리디|RIDI/i, '리디'],
+    [/문피아/i, '문피아'],
+    [/노벨피아/i, '노벨피아'],
+    [/조아라/i, '조아라'],
+    [/미스터블루/i, '미스터블루'],
+    [/봄툰/i, '봄툰'],
+    [/탑툰/i, '탑툰'],
+    [/북큐브/i, '북큐브'],
+    [/원스토어/i, '원스토어']
+  ];
+
+  function apiUrl(base, params) {
+    var parts = [];
+    Object.keys(params || {}).forEach(function (k) {
+      var v = params[k];
+      if (v === null || v === undefined || v === '') return;
+      parts.push(k + '=' + encodeURIComponent(String(v)));
+    });
+    return base + (base.indexOf('?') >= 0 ? '&' : '?') + parts.join('&');
+  }
+
+  function uniq(list) {
+    var out = [];
+    (list || []).forEach(function (v) { if (v && out.indexOf(v) < 0) out.push(v); });
+    return out;
+  }
+
+  function postJSON(url, payload, ms) {
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = null;
+    if (ctrl) timer = setTimeout(function () { ctrl.abort(); }, ms || 9000);
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ctrl ? ctrl.signal : undefined
+    }).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }).then(function (data) {
+      clearTimeout(timer);
+      return data;
+    }).catch(function (err) {
+      clearTimeout(timer);
+      throw err;
+    });
+  }
+
+  function wikiSearchPages(lang, query, limit) {
+    var url = apiUrl(WIKI_API[lang], {
+      action: 'query', generator: 'search', gsrsearch: query, gsrlimit: limit || 6, gsrnamespace: 0,
+      prop: 'extracts', exintro: 1, explaintext: 1, exchars: 400, format: 'json', origin: '*'
+    });
+    return fetchJSON(url, 9000).then(function (data) {
+      var pages = (data && data.query && data.query.pages) || {};
+      return Object.keys(pages).map(function (k) { return pages[k]; })
+        .sort(function (a, b) { return (a.index || 99) - (b.index || 99); })
+        .map(function (p) { return { title: p.title || '', extract: p.extract || '' }; });
+    });
+  }
+
+  function wikiWikitext(lang, titles) {
+    titles = uniq(titles).slice(0, 10);
+    if (!titles.length) return Promise.resolve({});
+    var chunks = [];
+    for (var i = 0; i < titles.length; i += 5) chunks.push(titles.slice(i, i + 5));
+    return Promise.all(chunks.map(function (chunk) {
+      var url = apiUrl(WIKI_API[lang], {
+        action: 'query', prop: 'revisions', rvprop: 'content', rvslots: 'main', redirects: 1,
+        titles: chunk.join('|'), format: 'json', origin: '*'
+      });
+      return fetchJSON(url, 10000).catch(function () { return null; });
+    })).then(function (list) {
+      var out = {};
+      list.forEach(function (data) {
+        if (!data || !data.query) return;
+        var pages = data.query.pages || {};
+        var alias = {};
+        (data.query.redirects || []).forEach(function (r) { alias[r.from] = r.to; });
+        var byTitle = {};
+        Object.keys(pages).forEach(function (k) {
+          var p = pages[k];
+          var revs = p.revisions || [];
+          if (!revs.length || !revs[0].slots || !revs[0].slots.main) return;
+          byTitle[p.title] = revs[0].slots.main['*'] || '';
+        });
+        Object.keys(byTitle).forEach(function (t) { out[t] = byTitle[t]; });
+        Object.keys(alias).forEach(function (from) {
+          if (byTitle[alias[from]] && !out[from]) out[from] = byTitle[alias[from]];
+        });
+      });
+      return out;
+    });
+  }
+
+  /* 정보상자 값에서 각주·틀·링크를 걷어내고 사람이 읽을 값만 남깁니다. */
+  function cleanWikiValue(raw) {
+    var v = String(raw || '');
+    if (!v) return '';
+    v = v.replace(/<ref[^>]*\/>/g, ' ').replace(/<ref[\s\S]*?<\/ref>/g, ' ').replace(/<!--[\s\S]*?-->/g, ' ');
+    v = v.replace(/\{\{[\s\S]*?\}\}/g, ' ');
+    v = v.replace(/\[\[([^\]|]*\|)?/g, '').replace(/\]\]/g, '');
+    v = v.replace(/<br\s*\/?>/gi, ', ').replace(/<[^>]+>/g, ' ');
+    v = v.replace(/&nbsp;/g, ' ').replace(/''+/g, '');
+    v = v.replace(/\s+/g, ' ').replace(/^[\s|,·]+|[\s|,·]+$/g, '').trim();
+    if (!v) return '';
+    if (/=/.test(v)) return '';
+    if (v.length > 120) v = v.slice(0, 120).trim();
+    return v;
+  }
+
+  /* 문서 첫머리의 정보상자(틀)만 골라 냅니다. 본문에 섞인 다른 틀의 값을 잘못 집지 않도록. */
+  function infoboxText(wikitext) {
+    var text = String(wikitext || '');
+    var i = 0;
+    while (i < text.length - 1) {
+      if (text.charAt(i) !== '{' || text.charAt(i + 1) !== '{') { i++; continue; }
+      var depth = 0;
+      var j = i;
+      for (; j < text.length - 1; j++) {
+        if (text.charAt(j) === '{' && text.charAt(j + 1) === '{') { depth++; j++; }
+        else if (text.charAt(j) === '}' && text.charAt(j + 1) === '}') { depth--; j++; if (depth === 0) break; }
+      }
+      var block = text.slice(i, j + 1);
+      if (block.length < 8000 && /(그림|감독|연출|작가|장르|poster|image)/.test(block)) return block;
+      i = j + 1;
+    }
+    return text.slice(0, 6000);
+  }
+
+  function infoField(wikitext, names) {
+    var text = infoboxText(wikitext);
+    for (var i = 0; i < names.length; i++) {
+      var m = text.match(new RegExp('\\|\\s*' + names[i] + '\\s*=\\s*([^\\n]*)'));
+      if (!m) continue;
+      var v = cleanWikiValue(m[1]);
+      if (v) return v;
+    }
+    return '';
+  }
+
+  function wikiFileUrl(lang, value) {
+    var v = String(value || '').trim();
+    if (!v) return '';
+    var m = v.match(/(?:파일|File|Image)\s*:\s*([^|\]\n]+)/i);
+    var file = m ? m[1] : v;
+    file = file.replace(/\[\[|\]\]/g, '').split('|')[0].trim();
+    if (!/\.(jpe?g|png|webp|gif|svg)$/i.test(file)) return '';
+    var host = lang === 'ko' ? 'ko.wikipedia.org' : 'en.wikipedia.org';
+    return 'https://' + host + '/wiki/Special:FilePath/' + encodeURIComponent(file.replace(/\s+/g, '_')) + '?width=400';
+  }
+
+  function wdSearch(query, limit) {
+    var url = apiUrl(WIKIDATA_API, {
+      action: 'wbsearchentities', search: query, language: 'ko', uselang: 'ko',
+      type: 'item', limit: limit || 6, format: 'json', origin: '*'
+    });
+    return fetchJSON(url, 9000).then(function (data) { return (data && data.search) || []; });
+  }
+
+  function wdEntities(ids) {
+    ids = uniq(ids).slice(0, 20);
+    if (!ids.length) return Promise.resolve({});
+    var url = apiUrl(WIKIDATA_API, {
+      action: 'wbgetentities', ids: ids.join('|'), props: 'labels|descriptions|claims|sitelinks',
+      languages: 'ko|en', sitefilter: 'kowiki|enwiki', format: 'json', origin: '*'
+    });
+    return fetchJSON(url, 10000).then(function (data) { return (data && data.entities) || {}; });
+  }
+
+  function wdLabels(ids) {
+    ids = uniq(ids).slice(0, 45);
+    if (!ids.length) return Promise.resolve({});
+    var url = apiUrl(WIKIDATA_API, {
+      action: 'wbgetentities', ids: ids.join('|'), props: 'labels', languages: 'ko|en', format: 'json', origin: '*'
+    });
+    return fetchJSON(url, 10000).then(function (data) {
+      var out = {};
+      var ents = (data && data.entities) || {};
+      Object.keys(ents).forEach(function (id) {
+        var labels = ents[id].labels || {};
+        var hit = labels.ko || labels.en || {};
+        out[id] = hit.value || '';
+      });
+      return out;
+    });
+  }
+
+  function wdValues(ent, prop) {
+    var out = [];
+    (((ent || {}).claims || {})[prop] || []).forEach(function (claim) {
+      var dv = claim && claim.mainsnak && claim.mainsnak.datavalue;
+      if (!dv) return;
+      var v = dv.value;
+      if (v && typeof v === 'object') out.push(String(v.id || v.time || v.text || v.amount || ''));
+      else if (v !== undefined && v !== null) out.push(String(v));
+    });
+    return out;
+  }
+
+  function wdLabelOf(ent, lang) {
+    var labels = (ent || {}).labels || {};
+    var hit = labels[lang] || labels.en || {};
+    return hit.value || '';
+  }
+
+  function wdDescOf(ent) {
+    var d = (ent || {}).descriptions || {};
+    return ((d.ko || d.en || {}).value) || '';
+  }
+
+  function wdSite(ent, site) {
+    return (((ent || {}).sitelinks || {})[site] || {}).title || '';
+  }
+
+  function sourceRank(source) {
+    if (source === '한국어 위키백과') return 1;
+    if (source === '위키데이터') return 2;
+    if (source === 'AniList') return 3;
+    if (source === 'Google Books') return 4;
+    return 9;
+  }
+
+  function shortNames(value, stripParens) {
+    var text = String(value || '').replace(/[{}[\]|]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (stripParens) text = text.replace(/\s*\([^)]*\)/g, ' ');
+    var parts = text.split(/[,、·/]/).map(function (part) {
+      return part.replace(/\s+/g, ' ').trim();
+    }).filter(Boolean);
+    var out = [];
+    parts.forEach(function (part) { if (out.indexOf(part) < 0) out.push(part); });
+    return out.slice(0, 3).join(', ');
+  }
+
+  function yearOf(text) {
+    var m = String(text || '').match(/(\d{4})/);
+    return m ? m[1] : '';
+  }
+
+  function plausibleYear(value) {
+    var y = parseInt(String(value || ''), 10);
+    if (!y || y < 1900 || y > 2100) return '';
+    return String(y);
+  }
+
+  function baseTitle(title) {
+    var t = String(title || '').trim();
+    var prev = '';
+    while (t !== prev) {
+      prev = t;
+      t = t.replace(/\s*\([^()]{1,24}\)\s*$/, '').trim();
+    }
+    return t;
+  }
+
+  function mediaKey(title) {
+    return titleKey(baseTitle(title));
+  }
+
+  function videoKindFrom(text, flags) {
+    var t = String(text || '');
+    flags = flags || {};
+    if (!t && !flags.film && !flags.show && !flags.program) return '';
+    if (/(애니메이션|애니|animation|anime)/i.test(t)) return '애니';
+    if (/(다큐멘터리|다큐|documentary|시사|교양)/i.test(t)) return '다큐';
+    if (/(예능|버라이어티|variety|오락|토크쇼)/i.test(t)) return '예능';
+    if (flags.film) return '영화';
+    if (flags.show) return '드라마';
+    if (/(드라마|텔레비전\s*시리즈|TV\s*시리즈|시트콤|television series|tv series)/i.test(t)) return '드라마';
+    if (flags.program) return '예능';
+    if (/(영화|film|movie)/i.test(t)) return '영화';
+    return '';
+  }
+
+  function kindFromText(text) {
+    var t = String(text || '');
+    var iComic = t.search(/웹툰|만화|코믹|manhwa|webtoon|comic|manga/i);
+    var iNovel = t.search(/웹소설|인터넷\s*소설|웹\s*노블|라이트\s*노블|web novel|light novel/i);
+    if (iNovel >= 0 && (iComic < 0 || iNovel < iComic)) return '웹소설';
+    if (iComic >= 0) return '웹툰';
+    if (/(소설|novel)/i.test(t)) return '웹소설';
+    return '';
+  }
+
+  /* 문서 첫 문장만 잘라 냅니다. 작품이 무엇인지 가장 분명하게 말하는 부분입니다. */
+  function firstSentence(text) {
+    var t = String(text || '').replace(/\s+/g, ' ').trim();
+    var cut = t.indexOf('. ');
+    if (cut < 0) cut = t.indexOf('\n');
+    if (cut > 12) t = t.slice(0, cut + 1);
+    return t.slice(0, 160);
+  }
+
+  function looksLikeWebtoon(text) {
+    return /(웹툰|웹소설|만화|소설|코믹|novel|comic|manhwa|manga)/i.test(String(text || ''));
+  }
+
+  function looksLikeVideo(text) {
+    return /(영화|드라마|방송|프로그램|시리즈|애니메이션|텔레비전|film|movie|series|television|program)/i.test(String(text || ''));
+  }
+
+  function detectPlatform(text) {
+    var t = String(text || '');
+    for (var i = 0; i < PLATFORM_RULES.length; i++) {
+      if (PLATFORM_RULES[i][0].test(t)) return PLATFORM_RULES[i][1];
+    }
+    return '';
+  }
+
+  /* 한국어 위키백과 정보상자에서 표지 그림·연출·작가·연재처를 꺼냅니다. */
+  function enrichWithWikiKo(list) {
+    var titles = [];
+    list.forEach(function (it) {
+      if (it.wikiTitle) titles.push(it.wikiTitle);
+      if (it.koTitle) titles.push(it.koTitle);
+    });
+    return wikiWikitext('ko', titles).then(function (texts) {
+      list.forEach(function (it) {
+        var wt = texts[it.wikiTitle] || texts[it.koTitle] || '';
+        if (!wt) return;
+        it.wikiLead = firstSentence(it.desc);
+        it.wikiDirector = infoField(wt, ['감독', '연출']);
+        it.wikiAuthor = infoField(wt, ['작가', '글', '저자']);
+        it.wikiGenre = infoField(wt, ['장르']);
+        it.wikiPlace = infoField(wt, ['연재처', '플랫폼', '방송사', '방송 채널']);
+        it.wikiYear = plausibleYear(yearOf(infoField(wt, ['방송 기간', '방영 기간', '개봉일', '공개일', '방송일', '발행일', '연재 기간'])));
+        it.wikiPoster = wikiFileUrl('ko', infoField(wt, ['그림', '이미지', '포스터']));
+      });
+      return list;
+    });
+  }
+
+  /* 한국어 위키백과에 포스터가 없으면 영어 위키백과 정보상자 그림으로 채웁니다. */
+  function fillPostersFromEn(list) {
+    var need = list.filter(function (it) { return !it.cover && !it.wikiPoster && it.enTitle; }).slice(0, 4);
+    if (!need.length) return Promise.resolve(list);
+    return wikiWikitext('en', need.map(function (it) { return it.enTitle; })).then(function (texts) {
+      need.forEach(function (it) {
+        var wt = texts[it.enTitle];
+        if (!wt) return;
+        it.wikiPoster = wikiFileUrl('en', infoField(wt, ['poster', 'image', 'Image', 'cover']));
+      });
+      return list;
+    });
+  }
+
+  function wdVideoItems(query) {
+    return wdSearch(query, 6).then(function (hits) {
+      if (!hits.length) return [];
+      return wdEntities(hits.map(function (h) { return h.id; })).then(function (ents) {
+        var rows = [];
+        var labelIds = [];
+        hits.forEach(function (hit) {
+          var ent = ents[hit.id] || {};
+          var types = wdValues(ent, 'P31');
+          var dirs = wdValues(ent, 'P57');
+          var genres = wdValues(ent, 'P136');
+          var makers = wdValues(ent, 'P272');
+          var country = wdValues(ent, 'P495');
+          labelIds = labelIds.concat(types, dirs, genres, makers);
+          rows.push({
+            title: wdLabelOf(ent, 'ko') || hit.label || '',
+            koTitle: wdSite(ent, 'kowiki'),
+            enTitle: wdSite(ent, 'enwiki'),
+            desc: wdDescOf(ent) || hit.description || '',
+            types: types, dirs: dirs, genres: genres, makers: makers, country: country,
+            year: plausibleYear(yearOf(wdValues(ent, 'P577')[0])),
+            source: '위키데이터'
+          });
+        });
+        return wdLabels(labelIds).then(function (labels) {
+          return rows.map(function (row) {
+            var director = row.dirs.map(function (id) { return labels[id]; }).filter(Boolean).join(', ')
+              || row.makers.map(function (id) { return labels[id]; }).filter(Boolean).slice(0, 2).join(', ');
+            var genreText = row.genres.map(function (id) { return labels[id]; }).filter(Boolean).join(' ');
+            var typeText = row.types.map(function (id) { return labels[id]; }).filter(Boolean).join(' ');
+            var isFilm = row.types.some(function (t) { return FILM_TYPES.indexOf(t) >= 0; });
+            var isShow = row.types.some(function (t) { return SHOW_TYPES.indexOf(t) >= 0; });
+            var isProgram = row.types.some(function (t) { return PROGRAM_TYPES.indexOf(t) >= 0; });
+            return {
+              title: row.title,
+              creator: director,
+              year: row.year,
+              kind: videoKindFrom([row.desc, genreText, typeText].join(' '), { film: isFilm, show: isShow, program: isProgram }),
+              koTitle: row.koTitle,
+              enTitle: row.enTitle,
+              desc: row.desc,
+              extra: [genreText, typeText].join(' '),
+              yearReliable: !!row.year,
+              kr: row.country.indexOf('Q884') >= 0 || /대한민국|한국/.test(row.desc || ''),
+              film: isFilm,
+              show: isShow,
+              program: isProgram,
+              media: (isFilm || isShow || isProgram) ? 'video' : '',
+              rank: (row.country.indexOf('Q884') >= 0 || /대한민국|한국/.test(row.desc || '')) ? 2 : 3,
+              source: '위키데이터'
+            };
+          });
+        });
+      });
+    });
+  }
+
+  function wikiVideoItems(query) {
+    return wikiSearchPages('ko', query, 6).then(function (pages) {
+      return pages.filter(function (p) {
+        return !/^(?:[^\n]{0,40}(?:배우|가수|감독|작가|만화가|성우|방송인)이다)/.test(p.extract || '');
+      }).map(function (p) {
+        return {
+          title: p.title,
+          wikiTitle: p.title,
+          desc: p.extract,
+          kind: videoKindFrom(p.extract),
+          rank: 1,
+          source: '한국어 위키백과'
+        };
+      });
+    });
+  }
+
+  function wdWebtoonItems(query) {
+    return wdSearch(query, 6).then(function (hits) {
+      if (!hits.length) return [];
+      return wdEntities(hits.map(function (h) { return h.id; })).then(function (ents) {
+        var rows = [];
+        var labelIds = [];
+        hits.forEach(function (hit) {
+          var ent = ents[hit.id] || {};
+          var types = wdValues(ent, 'P31');
+          var authors = wdValues(ent, 'P50');
+          var genres = wdValues(ent, 'P136');
+          labelIds = labelIds.concat(types, authors, genres);
+          rows.push({
+            title: wdLabelOf(ent, 'ko') || hit.label || '',
+            koTitle: wdSite(ent, 'kowiki'),
+            enTitle: wdSite(ent, 'enwiki'),
+            desc: wdDescOf(ent) || hit.description || '',
+            types: types, authors: authors, genres: genres,
+            year: plausibleYear(yearOf(wdValues(ent, 'P577')[0])),
+            source: '위키데이터'
+          });
+        });
+        return wdLabels(labelIds).then(function (labels) {
+          return rows.map(function (row) {
+            var isWebtoon = row.types.some(function (t) { return WEBTOON_TYPES.indexOf(t) >= 0; });
+            var isNovel = row.types.some(function (t) { return WEBNOVEL_TYPES.indexOf(t) >= 0; });
+            var isVideo = row.types.some(function (t) {
+              return FILM_TYPES.indexOf(t) >= 0 || SHOW_TYPES.indexOf(t) >= 0 || PROGRAM_TYPES.indexOf(t) >= 0;
+            });
+            if (isVideo && !isWebtoon && !isNovel) return null;
+            var typeText = row.types.map(function (id) { return labels[id]; }).filter(Boolean).join(' ');
+            var genreText = row.genres.map(function (id) { return labels[id]; }).filter(Boolean).join(' ');
+            var text = [row.desc, typeText, genreText].join(' ');
+            return {
+              title: row.title,
+              creator: row.authors.map(function (id) { return labels[id]; }).filter(Boolean).join(', '),
+              year: row.year,
+              kind: isNovel ? '웹소설' : (isWebtoon ? '웹툰' : kindFromText(text)),
+              platform: detectPlatform(text),
+              koTitle: row.koTitle,
+              enTitle: row.enTitle,
+              desc: row.desc,
+              extra: typeText + ' ' + genreText,
+              media: (isWebtoon || isNovel) ? 'webtoon' : '',
+              rank: 2,
+              yearReliable: !!row.year,
+              source: '위키데이터'
+            };
+          }).filter(Boolean);
+        });
+      });
+    });
+  }
+
+  function wikiWebtoonItems(query) {
+    return wikiSearchPages('ko', query, 6).then(function (pages) {
+      return pages.filter(function (p) {
+        return kindFromText(p.extract) || looksLikeWebtoon(p.extract);
+      }).map(function (p) {
+        return {
+          title: p.title,
+          wikiTitle: p.title,
+          desc: p.extract,
+          kind: kindFromText(p.extract),
+          platform: detectPlatform(p.extract),
+          rank: 1,
+          source: '한국어 위키백과'
+        };
+      });
+    });
+  }
+
+  function aniListItems(query) {
+    return postJSON(ANILIST_API, { query: ANILIST_QUERY, variables: { q: query } }, 9000).then(function (data) {
+      var media = (((data || {}).data || {}).Page || {}).media || [];
+      return media.map(function (m) {
+        var titles = m.title || {};
+        var creator = ((m.staff || {}).edges || []).map(function (edge) {
+          var n = (edge.node || {}).name || {};
+          return n.native || n.full || '';
+        }).filter(Boolean).join(', ');
+        return {
+          title: titles.native || titles.romaji || titles.english || '',
+          creator: creator,
+          year: ((m.startDate || {}).year || '') + '',
+          cover: ((m.coverImage || {}).large) || '',
+          kind: String(m.format || '').toUpperCase() === 'NOVEL' ? '웹소설' : '웹툰',
+          link: m.siteUrl || '',
+          media: m.countryOfOrigin === 'KR' ? 'webtoon' : '',
+          rank: 3,
+          source: 'AniList'
+        };
+      }).filter(function (it) { return it.title; });
+    });
+  }
+
+  function gbooksItems(query) {
+    var url = apiUrl(GBOOKS_FEED_API, { q: query, alt: 'json', 'max-results': 10 });
+    return fetchJSON(url, 9000).then(function (data) {
+      var entries = (((data || {}).feed || {}).entry) || [];
+      return entries.map(function (entry) {
+        var title = ((entry['dc$title'] || [{}])[0] || {}).$t || '';
+        var creators = (entry['dc$creator'] || []).map(function (c) { return c.$t; }).filter(Boolean);
+        var dates = (entry['dc$date'] || []).map(function (d) { return d.$t; }).filter(Boolean);
+        var thumb = '';
+        (entry.link || []).forEach(function (l) {
+          if (!thumb && String(l.rel || '').slice(-9) === 'thumbnail') thumb = l.href;
+        });
+        return {
+          title: String(title || '').trim(),
+          creator: creators.slice(0, 2).join(', '),
+          year: dates.length ? String(dates[0]).slice(0, 4) : '',
+          cover: fixCoverUrl(thumb),
+          kind: kindFromText(title),
+          rank: 4,
+          source: 'Google Books'
+        };
+      }).filter(function (it) { return it.title; });
+    });
+  }
+
+  function videoSources(query) {
+    function settle(p) {
+      return p.then(
+        function (items) { return { ok: true, items: items }; },
+        function () { return { ok: false, items: [] }; }
+      );
+    }
+    return Promise.all([settle(wdVideoItems(query)), settle(wikiVideoItems(query))]).then(function (res) {
+      var list = [];
+      var okCount = 0;
+      res.forEach(function (r) {
+        if (r.ok) okCount++;
+        list = list.concat(r.items);
+      });
+      if (!list.length) return { items: [], okCount: okCount };
+      return enrichWithWikiKo(list)
+        .then(fillPostersFromEn)
+        .then(function (rows) {
+          var items = rows.map(function (it) {
+            var kind = videoKindFrom(it.wikiLead || '')
+              || videoKindFrom([it.wikiGenre, it.desc, it.extra].join(' '), { film: it.film, show: it.show, program: it.program })
+              || it.kind || '';
+            var lead = it.wikiLead || it.desc || '';
+            if (!it.film && !it.show && !it.program && looksLikeWebtoon(lead) && !looksLikeVideo(lead)) return null;
+            return {
+              title: it.title,
+              creator: shortNames(it.wikiDirector, true) || it.creator || '',
+              year: it.year || it.wikiYear || plausibleYear(yearOf(String(it.desc || '').match(/\d{4}년/) ? String(it.desc).match(/\d{4}년/)[0] : '')),
+              kind: kind,
+              cover: it.wikiPoster || '',
+              desc: it.desc,
+              koTitle: it.koTitle || it.wikiTitle || '',
+              enTitle: it.enTitle || '',
+              yearReliable: !!it.yearReliable,
+              rank: it.rank || sourceRank(it.source),
+              source: it.source
+            };
+          }).filter(Boolean);
+          return { items: items, okCount: okCount };
+        });
+    });
+  }
+
+  function webtoonSources(query) {
+    function settle(p) {
+      return p.then(
+        function (items) { return { ok: true, items: items }; },
+        function () { return { ok: false, items: [] }; }
+      );
+    }
+    return Promise.all([
+      settle(wdWebtoonItems(query)),
+      settle(wikiWebtoonItems(query)),
+      settle(aniListItems(query)),
+      settle(gbooksItems(query))
+    ]).then(function (res) {
+      var list = [];
+      var okCount = 0;
+      res.forEach(function (r) {
+        if (r.ok) okCount++;
+        list = list.concat(r.items);
+      });
+      if (!list.length) return { items: [], okCount: okCount };
+      return enrichWithWikiKo(list).then(function (rows) {
+        var items = rows.map(function (it) {
+          var kind = it.kind || kindFromText([it.desc, it.wikiGenre, it.extra].join(' '));
+          if (kind !== '웹소설' && /소설/.test(it.wikiGenre || '')) kind = '웹소설';
+          return {
+            title: it.title,
+            creator: it.creator || shortNames(it.wikiAuthor, false) || '',
+            year: it.year || it.wikiYear || '',
+            kind: kind,
+            platform: detectPlatform([it.wikiPlace, it.desc].join(' ')) || it.platform, 
+            cover: it.cover || '',
+            coverAlt: it.wikiPoster || '',
+            link: it.link || (it.koTitle ? 'https://ko.wikipedia.org/wiki/' + encodeURIComponent(it.koTitle.replace(/\s+/g, '_')) : ''),
+            desc: it.desc,
+            koTitle: it.koTitle || it.wikiTitle || '',
+            media: it.media || (kind ? 'webtoon' : ''),
+            rank: it.rank || sourceRank(it.source),
+            source: it.source
+          };
+        });
+        return { items: items, okCount: okCount, boost: 'webtoon' };
+      });
+    });
+  }
+
+  /* 같은 작품을 여러 곳에서 찾아 왔을 때 제목 기준으로 묶고, 입력한 제목과 가까운 순서로 정렬합니다. */
+  function mediaCandidates(list, query, boost) {
+    var groups = {};
+    var order = [];
+    (list || []).forEach(function (it) {
+      if (!it || !it.title) return;
+      var key = mediaKey(it.title);
+      if (!key) return;
+      if (!groups[key]) {
+        groups[key] = [];
+        order.push(key);
+      }
+      groups[key].push(it);
+    });
+
+    var typed = String(query || '').trim().replace(/\s+/g, ' ');
+    var q = titleKey(typed);
+
+    var rows = order.map(function (key, index) {
+      var members = groups[key];
+      if (boost) {
+        members = members.slice().sort(function (a, b) {
+          return (b.media === boost ? 1 : 0) - (a.media === boost ? 1 : 0);
+        });
+      }
+      var merged = {
+        title: '', creator: '', year: '', cover: '', coverAlt: '', kind: '', platform: '',
+        link: '', koTitle: '', enTitle: '', desc: '', sources: []
+      };
+      var ranked = members.slice().sort(function (a, b) { return (a.rank || 9) - (b.rank || 9); });
+      var pick = { creator: '', year: '', solidYear: '' };
+      ranked.forEach(function (m) {
+        if (!pick.creator && m.creator) pick.creator = m.creator;
+        if (!pick.year && m.year) pick.year = m.year;
+        if (!pick.solidYear && m.yearReliable && m.year) pick.solidYear = m.year;
+      });
+      members.forEach(function (m) {
+        if (!merged.title || (merged.title.indexOf('(') >= 0 && m.title.indexOf('(') < 0)) merged.title = m.title;
+        if (m.source && merged.sources.indexOf(m.source) < 0) merged.sources.push(m.source);
+      });
+      var kindCount = {};
+      ranked.forEach(function (m) {
+        ['cover', 'coverAlt', 'platform', 'link', 'koTitle', 'enTitle', 'desc'].forEach(function (f) {
+          if (!merged[f] && m[f]) merged[f] = m[f];
+        });
+        if (m.kind) kindCount[m.kind] = (kindCount[m.kind] || 0) + 1;
+      });
+      var bestKind = '';
+      var bestCount = 0;
+      Object.keys(kindCount).forEach(function (k) {
+        if (kindCount[k] > bestCount) { bestCount = kindCount[k]; bestKind = k; }
+      });
+      merged.kind = bestKind;
+      members.forEach(function (m) {
+        ['cover', 'coverAlt', 'kind', 'platform', 'link', 'koTitle', 'enTitle', 'desc'].forEach(function (f) {
+          if (!merged[f] && m[f]) merged[f] = m[f];
+        });
+      });
+      merged.creator = pick.creator;
+      merged.year = pick.solidYear || pick.year;
+      if (!merged.cover) merged.cover = merged.coverAlt;
+      merged.thumb = merged.cover;
+
+      var score = key === q ? 3 : (key.indexOf(q) === 0 ? 2 : (key.indexOf(q) >= 0 ? 1 : 0));
+      if (boost && members.some(function (m) { return m.media === boost; })) score += 0.5;
+      if (score >= 3 && typed) merged.title = typed;
+      return { item: merged, score: score, index: index, cover: merged.cover ? 1 : 0 };
+    });
+
+    if (rows.some(function (r) { return r.score >= 3; })) {
+      rows = rows.filter(function (r) { return r.score >= 2; });
+    } else if (rows.some(function (r) { return r.score >= 2; })) {
+      rows = rows.filter(function (r) { return r.score > 0; });
+    }
+    rows = rows.filter(function (r) { return r.item.kind || r.item.creator; });
+
+    rows.sort(function (a, b) {
+      return b.score - a.score || b.cover - a.cover || a.index - b.index;
+    });
+    return rows.slice(0, LOOKUP_MAX).map(function (r) { return r.item; });
+  }
+
+  function lookupMedia(collectionId) {
+    var c = coll(collectionId || state.current);
+    var query = el.fTitle.value.trim();
+    if (!query) {
+      toast(c.itemWord + ' 제목을 먼저 적어 주세요.');
+      el.fTitle.focus();
+      return;
+    }
+
+    var seq = ++lookupSeq;
+    state.lookup = { busy: true, items: [], message: '', tone: '' };
+    renderLookup();
+
+    var job = collectionId === 'webtoons' ? webtoonSources(query) : videoSources(query);
+    job.then(function (res) {
+      if (seq !== lookupSeq) return;
+      var items = mediaCandidates(res.items, query, res.boost);
+      if (items.length) {
+        state.lookup = { busy: false, items: items, message: '', tone: '' };
+      } else if (!res.okCount) {
+        state.lookup = { busy: false, items: [], tone: 'error', message: c.lookupFail };
+      } else {
+        state.lookup = { busy: false, items: [], tone: 'empty', message: c.lookupEmpty };
+      }
+      renderLookup();
+    }, function () {
+      if (seq !== lookupSeq) return;
+      state.lookup = { busy: false, items: [], tone: 'error', message: c.lookupFail };
+      renderLookup();
     });
   }
 
@@ -1189,6 +1975,7 @@
 
     renderFormKinds(item ? (item.kind || c.defaultKind) : c.defaultKind, false);
     renderFormStatus(item ? item.status : 'done');
+    clearTimeout(lookupTimer);
     state.lookup = { busy: false, items: [], message: '', tone: '' };
     renderLookup();
     openModal(el.formModal);
@@ -1888,12 +2675,32 @@
     });
 
     el.fCover.addEventListener('input', function () { setCoverPreview(el.fCover.value.trim()); });
-    el.fTitle.addEventListener('input', function () { el.fTitleError.hidden = true; });
+    el.fTitle.addEventListener('input', function () {
+      el.fTitleError.hidden = true;
+      var c = current();
+      if (!c.lookup || c.id === 'books') return;
+      clearTimeout(lookupTimer);
+      var typed = el.fTitle.value.trim();
+      if (typed.length < 2) {
+        state.lookup = { busy: false, items: [], message: '', tone: '' };
+        renderLookup();
+        return;
+      }
+      lookupTimer = setTimeout(function () {
+        if (el.formModal.hidden) return;
+        if (el.fTitle.value.trim() !== typed) return;
+        lookupMedia(c.id);
+      }, 900);
+    });
     el.fTitle.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); saveForm(); }
     });
 
-    el.fLookup.addEventListener('click', lookupBooks);
+    el.fLookup.addEventListener('click', function () {
+      var c = current();
+      if (c.lookup && c.id !== 'books') { lookupMedia(c.id); return; }
+      lookupBooks();
+    });
     el.fLookupList.addEventListener('click', function (e) {
       var btn = e.target.closest('[data-lookup]');
       if (!btn) return;
