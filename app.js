@@ -41,6 +41,7 @@
   var lookupTimer = null;
   /* 자동 검색이 채워 둔 값 — 다른 후보를 고르면 앞 후보의 값이 남지 않도록 기억합니다. */
   var lastAuto = { creator: '', platform: '', link: '' };
+  var swReloading = false;
   var syncApplying = false;
 
   /* ---------------- 기록 종류 도우미 ---------------- */
@@ -2561,7 +2562,16 @@
     if (!('serviceWorker' in navigator)) return;
     if (location.protocol !== 'http:' && location.protocol !== 'https:') return;
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js').catch(function () {});
+      navigator.serviceWorker.register('sw.js').then(function (reg) {
+        /* 새 코드가 올라왔는지 바로 확인합니다(브라우저가 스스로 확인하는 주기를 기다리지 않도록). */
+        if (reg && typeof reg.update === 'function') reg.update().catch(function () {});
+      }).catch(function () {});
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (swReloading) return;
+        if (document.querySelector('.modal:not([hidden])')) return; /* 입력 중인 화면은 건드리지 않습니다 */
+        swReloading = true;
+        location.reload();
+      });
     });
   }
 
