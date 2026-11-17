@@ -1,7 +1,7 @@
 /* 나만의 기록 — 오프라인 캐시
    앱 껍데기만 저장하고, 기록 데이터(books.json · videos.json · webtoons.json)는
    항상 새로 확인합니다. */
-const CACHE = 'shelf-v7';
+const CACHE = 'shelf-v8';
 const SHELL = [
   './',
   './index.html',

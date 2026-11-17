@@ -39,6 +39,8 @@
   var confirmResolve = null;
   var toastTimer = null;
   var lookupTimer = null;
+  /* 자동 검색이 채워 둔 값 — 다른 후보를 고르면 앞 후보의 값이 남지 않도록 기억합니다. */
+  var lastAuto = { creator: '', platform: '', link: '' };
   var syncApplying = false;
 
   /* ---------------- 기록 종류 도우미 ---------------- */
@@ -1126,12 +1128,37 @@
     var c = current();
     var who = c.creatorShort || '저자';
     el.fTitle.value = item.title;
-    if (item.creator) el.fCreator.value = item.creator;
+
+    if (item.creator) {
+      el.fCreator.value = item.creator;
+      lastAuto.creator = item.creator;
+    } else if (el.fCreator.value.trim() === lastAuto.creator) {
+      el.fCreator.value = '';
+      lastAuto.creator = '';
+    }
 
     var kindValue = item.kind || item.category || '';
     if (kindValue && kindList(c).indexOf(kindValue) >= 0) renderFormKinds(kindValue, false);
-    if (item.platform && c.platform) el.fPlatform.value = item.platform;
-    if (item.link && c.link && !el.fLink.value) el.fLink.value = item.link;
+
+    if (c.platform) {
+      if (item.platform) {
+        el.fPlatform.value = item.platform;
+        lastAuto.platform = item.platform;
+      } else if (el.fPlatform.value.trim() === lastAuto.platform) {
+        el.fPlatform.value = '';
+        lastAuto.platform = '';
+      }
+    }
+
+    if (c.link) {
+      var linked = el.fLink.value.trim();
+      if (item.link) {
+        if (!linked || linked === lastAuto.link) el.fLink.value = item.link;
+      } else if (linked === lastAuto.link) {
+        el.fLink.value = '';
+      }
+      lastAuto.link = item.link || '';
+    }
 
     el.fTitleError.hidden = true;
     state.lookup = { busy: false, items: [], message: '', tone: '' };
@@ -1976,6 +2003,7 @@
     renderFormKinds(item ? (item.kind || c.defaultKind) : c.defaultKind, false);
     renderFormStatus(item ? item.status : 'done');
     clearTimeout(lookupTimer);
+    lastAuto = { creator: '', platform: '', link: '' };
     state.lookup = { busy: false, items: [], message: '', tone: '' };
     renderLookup();
     openModal(el.formModal);
