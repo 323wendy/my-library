@@ -1,7 +1,7 @@
 {
   "app": "나만의 기록",
   "version": 1,
-  "updatedAt": "2026-11-17T06:56:39.498Z",
+  "updatedAt": "2026-11-17T08:40:00Z",
   "count": 1,
   "items": [
     {
@@ -14,7 +14,7 @@
       "status": "보는 중",
       "cover": "https://en.wikipedia.org/wiki/Special:FilePath/100_Days_of_Deception_poster.jpeg?width=400",
       "note": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [],
       "link": "",
       "updatedAt": "2026-11-17T06:56:38.596Z",

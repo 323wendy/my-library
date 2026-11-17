@@ -238,28 +238,73 @@
   function renderSummary() {
     var c = current();
     var list = itemsOf();
-    var hearts = 0;
-    list.forEach(function (b) { if (b.heart) hearts++; });
-    el.summary.textContent = c.emoji + ' ' + c.label + ' · 총 ' + list.length + c.unit + ' · ❤️ ' + hearts + c.unit;
+    var starred = 0;
+    list.forEach(function (b) { if (C.itemRating(b) > 0) starred++; });
+    /* 좁은 화면에서도 '⭐ 2'와 '개'가 갈라지지 않도록 두 조각으로 나눠 넣습니다。 */
+    el.summary.innerHTML = '<span class="sum-part">' + esc(c.emoji + ' ' + c.label + ' · 총 ' + list.length + c.unit) + '</span>'
+      + '<span class="sum-stars' + (starred ? ' on' : '') + '">⭐ ' + starred + esc(c.unit) + '</span>';
+  }
+
+  /* ---------------- 별점 (노란 별 0~3개) ---------------- */
+
+  function ratingFilter(n) { return 'rating:' + n; }
+  function isRatingFilter(v) { return typeof v === 'string' && v.indexOf('rating:') === 0; }
+  function ratingOfFilter(v) { return Number(String(v).split(':')[1]) || 0; }
+
+  /* 별 3개를 그립니다. onlyFilled면 채운 별만 남깁니다. */
+  function starRowHTML(n, onlyFilled) {
+    n = Math.max(0, Math.min(C.RATING_MAX, Number(n) || 0));
+    if (onlyFilled && !n) return '';
+    var html = '';
+    for (var i = 1; i <= C.RATING_MAX; i++) {
+      if (onlyFilled && i > n) break;
+      html += '<svg class="star' + (i <= n ? ' on' : '') + '" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"></use></svg>';
+    }
+    return '<span class="star-row" aria-hidden="true">' + html + '</span>';
+  }
+
+  /* 누를 수 있는 별 3개 + '없음'. 같은 별을 한 번 더 누르면 0개가 됩니다. */
+  function ratingButtonsHTML(rating) {
+    rating = Math.max(0, Math.min(C.RATING_MAX, Number(rating) || 0));
+    var html = '';
+    for (var i = 1; i <= C.RATING_MAX; i++) {
+      html += '<button type="button" class="star-btn' + (i <= rating ? ' on' : '') + '" data-act="rate" data-rate="' + i + '"'
+        + ' aria-pressed="' + (i <= rating) + '" aria-label="별 ' + i + '개 주기">'
+        + '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"></use></svg></button>';
+    }
+    html += '<button type="button" class="rate-clear' + (rating ? '' : ' is-on') + '" data-act="rate" data-rate="0"'
+      + ' aria-pressed="' + (rating === 0) + '" aria-label="별점 없음">없음</button>';
+    return html;
   }
 
   function renderChips() {
     var c = current();
     var counts = {};
+    var rated = { 1: 0, 2: 0, 3: 0 };
     itemsOf().forEach(function (b) {
       var k = b.kind || c.defaultKind;
       counts[k] = (counts[k] || 0) + 1;
+      var r = C.itemRating(b);
+      if (r > 0) rated[r]++;
     });
     var kinds = Object.keys(counts).sort(function (a, b) {
       return counts[b] - counts[a] || a.localeCompare(b, 'ko');
     });
 
-    if (state.filter !== 'all' && state.filter !== '__heart__' && kinds.indexOf(state.filter) < 0) {
+    if (state.filter !== 'all' && !isRatingFilter(state.filter) && kinds.indexOf(state.filter) < 0) {
       state.filter = 'all';
     }
 
     var html = '<button type="button" class="chip' + (state.filter === 'all' ? ' is-active' : '') + '" data-filter="all">전체</button>';
-    html += '<button type="button" class="chip heart' + (state.filter === '__heart__' ? ' is-active' : '') + '" data-filter="__heart__" aria-label="하트한 기록만 보기" aria-pressed="' + (state.filter === '__heart__') + '"><span class="heart-mini">❤️</span></button>';
+    [3, 2, 1].forEach(function (n) {
+      var on = state.filter === ratingFilter(n);
+      var stars = '';
+      for (var i = 0; i < n; i++) stars += '★';
+      html += '<button type="button" class="chip stars' + (on ? ' is-active' : '') + '" data-filter="' + ratingFilter(n) + '"'
+        + ' aria-pressed="' + on + '" aria-label="별 ' + n + '개 준 기록만 보기">'
+        + '<span class="chip-stars" aria-hidden="true">' + stars + '</span>'
+        + '<span class="chip-num">' + rated[n] + '</span></button>';
+    });
     var tints = ['rose', 'apricot', 'lavender', 'sage'];
     kinds.forEach(function (k, i) {
       html += '<button type="button" class="chip tint-' + tints[i % tints.length] + (state.filter === k ? ' is-active' : '') + '" data-filter="' + esc(k) + '">' + esc(k) + '</button>';
@@ -293,8 +338,8 @@
     var c = current();
     var q = state.query.trim().toLowerCase();
     var list = itemsOf().filter(function (b) {
-      if (state.filter === '__heart__') {
-        if (!b.heart) return false;
+      if (isRatingFilter(state.filter)) {
+        if (C.itemRating(b) !== ratingOfFilter(state.filter)) return false;
       } else if (state.filter !== 'all' && (b.kind || c.defaultKind) !== state.filter) {
         return false;
       }
@@ -341,14 +386,15 @@
 
   function cardHTML(b) {
     var img = b.cover ? '<img src="' + esc(b.cover) + '" alt="" loading="lazy" decoding="async">' : '';
+    var rating = C.itemRating(b);
     return '<article class="card">'
       + '<div class="cover" data-act="open" data-id="' + esc(b.id) + '" role="button" tabindex="0" aria-label="' + esc(b.title) + ' 상세 보기">'
       + fallbackHTML(b)
       + img
       + coverBadgeHTML(b)
-      + '<button type="button" class="heart' + (b.heart ? ' on' : '') + '" data-act="heart" data-id="' + esc(b.id) + '"'
-      + ' aria-pressed="' + (b.heart ? 'true' : 'false') + '" aria-label="' + esc(b.title) + ' 하트 ' + (b.heart ? '빼기' : '표시') + '">'
-      + '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-heart"></use></svg>'
+      + '<button type="button" class="card-stars' + (rating ? ' on' : '') + '" data-act="stars" data-id="' + esc(b.id) + '"'
+      + ' aria-pressed="' + (rating > 0) + '" aria-label="' + esc(b.title) + ' 별점 ' + (rating ? rating + '개' : '없음') + ', 누르면 별점이 바뀝니다">'
+      + starRowHTML(rating)
       + '</button>'
       + '</div>'
       + '<h3 class="card-title" data-act="open" data-id="' + esc(b.id) + '">' + esc(b.title) + '</h3>'
@@ -421,7 +467,9 @@
     el.statYearLabel.textContent = c.stats.year;
     el.statTotal.textContent = s.total + c.unit;
     el.statYear.textContent = s.thisYear + c.unit;
-    el.statHeart.textContent = s.hearts + c.unit;
+    el.statStar.textContent = s.starred + c.unit;
+    el.statStarLabel.textContent = '⭐ 별 준 ' + c.itemWord;
+    el.statStarCard.title = '★★★ ' + s.ratingCounts[3] + c.unit + ' · ★★ ' + s.ratingCounts[2] + c.unit + ' · ★ ' + s.ratingCounts[1] + c.unit;
     el.panelYearTitle.textContent = (c.id === 'books' ? '연도별 완독 통계 🏆' : '연도별 본 기록 🏆');
     el.panelKindTitle.textContent = c.kindLabel + '별 분포 🏷️';
     el.barsYear.innerHTML = barRows(s.years, '아직 완료한 기록이 없어요.', false);
@@ -526,7 +574,7 @@
       '<div class="detail-cover tint-' + c.tint + '">'
       + fallbackHTMLFor(b, c)
       + img
-      + (b.heart ? '<span class="cover-heart" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-heart"></use></svg></span>' : '')
+      + (C.itemRating(b) ? '<span class="cover-stars" aria-hidden="true">' + starRowHTML(C.itemRating(b), true) + '</span>' : '')
       + '</div>'
       + '<h2 class="detail-title">' + esc(b.title) + '</h2>'
       + '<p class="detail-author">' + esc(creator || ' ') + '</p>'
@@ -534,8 +582,10 @@
       + '<span class="chip-static kind tint-' + c.tint + '">' + esc(b.kind || c.defaultKind) + '</span>'
       + (b.platform ? '<span class="chip-static">' + esc(b.platform) + '</span>' : '')
       + (statusChipText(b, c) ? '<span class="chip-static status' + statusChipClass(b) + '">' + esc(statusChipText(b, c)) + '</span>' : '')
-      + '<button type="button" class="chip-static tappable' + (b.heart ? ' on' : '') + '" data-act="detail-heart">'
-      + (b.heart ? '❤️ 하트' : '🤍 하트') + '</button>'
+      + '</div>'
+      + '<div class="rating-control" role="group" aria-label="별점">'
+      + '<span class="rating-label">별점</span>'
+      + '<span class="rating-stars">' + ratingButtonsHTML(C.itemRating(b)) + '</span>'
       + '</div>'
       + (b.memo ? '<p class="detail-memo">' + esc(b.memo) + '</p>' : '')
       + (link ? '<a class="detail-link" href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">🔗 링크 열기</a>' : '')
@@ -1991,7 +2041,8 @@
     el.fStart.value = item ? (item.startDate || '') : '';
     el.fEnd.value = item ? (item.endDate || '') : '';
     el.fMemo.value = item ? (item.memo || '') : '';
-    el.fHeart.checked = item ? !!item.heart : false;
+    state.formRating = item ? C.itemRating(item) : 0;
+    renderFormRating();
     el.fTitleError.hidden = true;
     setCoverPreview(item ? item.cover : '');
     el.fCover.value = item ? (item.cover || '') : '';
@@ -2010,6 +2061,11 @@
     openModal(el.formModal);
     el.formBody.scrollTop = 0;
     setTimeout(function () { if (!item) el.fTitle.focus(); }, 120);
+  }
+
+  function renderFormRating() {
+    el.fRating.innerHTML = ratingButtonsHTML(state.formRating);
+    el.fRatingLabel.textContent = '별점' + (state.formRating ? ' (노란 별 ' + state.formRating + '개)' : '');
   }
 
   function setCoverPreview(url) {
@@ -2122,7 +2178,7 @@
       status: C.normalizeStatus(state.formStatus),
       cover: el.fCover.value.trim(),
       memo: el.fMemo.value.trim(),
-      heart: el.fHeart.checked
+      rating: state.formRating
     };
     if (c.platform) item.platform = el.fPlatform.value.trim();
     if (c.link) item.link = safeLink(el.fLink.value.trim());
@@ -2143,7 +2199,7 @@
       : '「' + item.title + '」을(를) ' + c.label + ' 칸에 담았어요.');
   }
 
-  /* ---------------- 삭제 / 하트 ---------------- */
+  /* ---------------- 삭제 / 별점 ---------------- */
 
   function deleteItem(id) {
     var b = findItem(id);
@@ -2174,14 +2230,37 @@
     });
   }
 
-  function toggleHeart(id) {
+  /* 별점을 정합니다(0~3). 카드에서 바로 누르면 0 → 1 → 2 → 3 → 0 순서로 돌아가고,
+     상세·등록 화면에서는 원하는 별을 누르면 그 개수가 됩니다. */
+  function setRating(id, value) {
     var b = findItem(id);
-    if (!b) return;
-    var next = Object.assign({}, b, { heart: !b.heart });
+    if (!b) return null;
+    var rating = Math.max(0, Math.min(C.RATING_MAX, Math.round(Number(value) || 0)));
+    var before = C.itemRating(b);
+    var next = Object.assign({}, b, { rating: rating });
     upsertLocal(next);
     refresh();
     if (state.detailId === id) renderDetail(next);
-    toast(next.heart ? '❤️ 하트에 담았어요.' : '하트를 뺐어요.');
+    if (before !== rating) {
+      toast(rating ? '노란 별 ' + rating + '개를 채웠어요.' : '별점을 지웠어요.');
+    }
+    return next;
+  }
+
+  function cycleRating(id) {
+    var b = findItem(id);
+    if (!b) return;
+    var rating = C.itemRating(b);
+    setRating(id, rating >= C.RATING_MAX ? 0 : rating + 1);
+  }
+
+  /* 이미 켜 둔 별을 한 번 더 누르면 0개로 되돌립니다. */
+  function tapStar(id, value) {
+    var b = findItem(id);
+    if (!b) return;
+    var want = Math.max(0, Math.min(C.RATING_MAX, Math.round(Number(value) || 0)));
+    if (want > 0 && C.itemRating(b) === want) want = 0;
+    setRating(id, want);
   }
 
   /* ---------------- 샘플 ---------------- */
@@ -2634,9 +2713,9 @@
       var target = e.target.closest('[data-act]');
       if (!target) return;
       var id = target.getAttribute('data-id');
-      if (target.getAttribute('data-act') === 'heart') {
+      if (target.getAttribute('data-act') === 'stars') {
         e.stopPropagation();
-        toggleHeart(id);
+        cycleRating(id);
       } else {
         openDetail(id);
       }
@@ -2667,7 +2746,7 @@
       var btn = e.target.closest('[data-act]');
       if (!btn) return;
       var act = btn.getAttribute('data-act');
-      if (act === 'detail-heart') { toggleHeart(state.detailId); return; }
+      if (act === 'rate') { tapStar(state.detailId, btn.getAttribute('data-rate')); return; }
       if (act === 'quote-save') { saveQuote(); return; }
       if (act === 'quote-cancel') { cancelQuoteEdit(); return; }
       if (act === 'quote-edit') { startQuoteEdit(btn.getAttribute('data-qid')); return; }
@@ -2696,6 +2775,13 @@
     el.formClose.addEventListener('click', function () { closeModal(el.formModal); });
     el.formCancel.addEventListener('click', function () { closeModal(el.formModal); });
     el.formSave.addEventListener('click', saveForm);
+    el.fRating.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-rate]');
+      if (!btn) return;
+      var want = Number(btn.getAttribute('data-rate')) || 0;
+      state.formRating = (want > 0 && state.formRating === want) ? 0 : want;
+      renderFormRating();
+    });
 
     el.fKinds.addEventListener('click', function (e) {
       var btn = e.target.closest('[data-kind]');
@@ -2824,7 +2910,9 @@
       btnKeepSamples: $('btn-keep-samples'),
       statTotal: $('stat-total'),
       statYear: $('stat-year'),
-      statHeart: $('stat-heart'),
+      statStar: $('stat-star'),
+      statStarLabel: $('stat-star-label'),
+      statStarCard: $('stat-star-card'),
       statTotalLabel: $('stat-total-label'),
       statYearLabel: $('stat-year-label'),
       statNote: $('stat-note'),
@@ -2874,7 +2962,8 @@
       fLinkField: $('f-link-field'),
       fMemo: $('f-memo'),
       fMemoLabel: $('f-memo-label'),
-      fHeart: $('f-heart'),
+      fRating: $('f-rating'),
+      fRatingLabel: $('f-rating-label'),
       importModal: $('import-modal'),
       importHelp: $('import-help'),
       importText: $('import-text'),

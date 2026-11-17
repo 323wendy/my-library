@@ -206,6 +206,42 @@
     return s === 'true' || s === 'y' || s === 'yes' || s === '1' || s === 'on';
   }
 
+  /* 별점은 0~3개(노란 별). 예전에 쓰던 heart(true/false)는 별 3개/0개로 읽습니다. */
+  var RATING_MAX = 3;
+  var RATING_KEYS = ['rating', 'stars', 'star', 'score', '별점', '별'];
+  var HEART_KEYS = ['heart', 'favorite', 'liked', 'isHeart', 'love', 'like'];
+
+  function toRating(v) {
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'boolean') return v ? RATING_MAX : 0;
+    var s = str(v);
+    if (!s) return null;
+    var m = s.match(/-?\d+(?:\.\d+)?/);
+    if (!m) {
+      /* "★★★"처럼 별 모양만 적힌 값도 받습니다. */
+      var stars = (s.match(/[★⭐]/g) || []).length;
+      return stars ? Math.min(RATING_MAX, stars) : null;
+    }
+    var n = Number(m[0]);
+    if (!isFinite(n)) return null;
+    return Math.max(0, Math.min(RATING_MAX, Math.round(n)));
+  }
+
+  /* 어떤 모양의 기록이든 별점(0~3) 하나로 맞춥니다. */
+  function itemRating(raw) {
+    if (!raw || typeof raw !== 'object') return 0;
+    var r = toRating(firstOf(raw, RATING_KEYS));
+    if (r !== null) return r;
+    var h = firstOf(raw, HEART_KEYS);
+    if (h !== '') return toBool(h) ? RATING_MAX : 0;
+    return 0;
+  }
+
+  function ratingLabel(n) {
+    n = toRating(n) || 0;
+    return n ? '★' + n : '별점 없음';
+  }
+
   /* 페이지 번호는 "42", "p.42", "42-43", "42쪽"처럼 적어도 됩니다.
      앞의 p./페이지 같은 말은 떼고 숫자·범위만 남깁니다. */
   function pageLabel(v) {
@@ -300,7 +336,7 @@
       status: normalizeStatus(firstOf(raw, ['status', '상태', 'state', 'readStatus', '읽기상태', '보기상태'])),
       cover: str(firstOf(raw, ['cover', 'coverUrl', 'coverURL', 'image', 'imageUrl', 'thumbnail', 'thumbnailUrl', 'poster', '표지', '포스터'])) || '',
       memo: str(rawMemo),
-      heart: toBool(firstOf(raw, ['heart', 'favorite', 'liked', 'isHeart', 'love', 'like'])),
+      rating: itemRating(raw),
       quotes: quotes
     };
     if (coll.platform) item.platform = str(firstOf(raw, ['platform', '플랫폼', 'site', 'service']));
@@ -409,11 +445,13 @@
     coll = typeof coll === 'string' ? collection(coll) : (coll || COLLECTIONS[0]);
     now = now || new Date();
     var currentYear = now.getFullYear();
-    var total = 0, thisYear = 0, hearts = 0, stopped = 0, active = 0, undated = 0;
+    var total = 0, thisYear = 0, starred = 0, stopped = 0, active = 0, undated = 0;
+    var ratingCounts = { 1: 0, 2: 0, 3: 0 };
     var years = {}, months = {}, kinds = {};
 
     (items || []).forEach(function (b) {
-      if (b.heart) hearts++;
+      var rate = itemRating(b);
+      if (rate > 0) { starred++; ratingCounts[rate]++; }
       var kind = b.kind || coll.defaultKind;
       kinds[kind] = (kinds[kind] || 0) + 1;
 
@@ -448,7 +486,8 @@
     return {
       total: total,
       thisYear: thisYear,
-      hearts: hearts,
+      starred: starred,
+      ratingCounts: ratingCounts,
       stopped: stopped,
       active: active,
       undated: undated,
@@ -527,7 +566,7 @@
     out.cover = b.cover || '';
     if (coll.listKey === 'books') out.memo = b.memo || '';
     else out.note = b.memo || '';
-    out.heart = !!b.heart;
+    out.rating = itemRating(b);
     out.quotes = cleanQuotes(b.quotes);
     if (coll.link) out.link = b.link || '';
     return out;
@@ -676,6 +715,10 @@
     collection: collection,
     statusLabel: statusLabel,
     normalizeStatus: normalizeStatus,
+    RATING_MAX: RATING_MAX,
+    toRating: toRating,
+    itemRating: itemRating,
+    ratingLabel: ratingLabel,
     newId: newId,
     toDate: toDate,
     normalizeItem: normalizeItem,

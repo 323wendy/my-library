@@ -1,7 +1,7 @@
 {
   "app": "나만의 기록",
   "version": 1,
-  "updatedAt": "2026-11-17T00:54:39Z",
+  "updatedAt": "2026-11-17T08:40:00Z",
   "count": 2,
   "items": [
     {
@@ -15,7 +15,7 @@
       "status": "완독",
       "cover": "https://img.ridicdn.net/cover/425270925/xxlarge",
       "note": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [],
       "link": "",
       "updatedAt": "2026-11-16T12:53:54.515Z",
@@ -32,7 +32,7 @@
       "status": "완독",
       "cover": "https://img.ridicdn.net/cover/1746020571/xxlarge",
       "note": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [],
       "link": "",
       "updatedAt": "2026-11-16T13:10:44Z",

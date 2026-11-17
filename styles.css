@@ -210,14 +210,15 @@ h1 {
   border-color: var(--ink);
   color: #fff;
 }
-.chip.heart {
-  width: 54px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  font-size: 17px;
+.chip.stars {
+  padding: 0 12px 0 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
 }
-.chip.heart .heart-mini { font-size: 16px; line-height: 1; }
+.chip.stars .chip-stars { font-size: 13.5px; line-height: 1; letter-spacing: .5px; color: #e0a118; }
+.chip.stars .chip-num { font-size: 12px; font-weight: 800; color: #a9927f; }
 
 /* ---------- 샘플 안내 ---------- */
 .notice {
@@ -324,28 +325,31 @@ h1 {
 .detail-cover .fb-title { font-size: 17px; -webkit-line-clamp: 8; }
 .detail-cover .fb-author { font-size: 12.5px; }
 
-.cover .heart {
+.cover .card-stars {
   position: absolute;
   left: 5px;
   bottom: 5px;
-  z-index: 3;
-  width: 30px;
-  height: 30px;
-  padding: 0;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 5px;
   border: 0;
-  background: none;
-  display: grid;
-  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 251, 240, .9);
+  box-shadow: 0 1px 4px rgba(60, 40, 30, .26);
+  cursor: pointer;
 }
-.cover .heart svg {
-  width: 21px;
-  height: 21px;
-  fill: #ffffff;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .55));
+.cover .card-stars .star-row { display: inline-flex; gap: 1px; }
+.cover .card-stars svg.star {
+  width: 12px;
+  height: 12px;
+  display: block;
+  fill: #e3d6c4;
   transition: transform .16s ease, fill .16s ease;
 }
-.cover .heart.on svg { fill: #f0403c; }
-.cover .heart:active svg { transform: scale(.86); }
+.cover .card-stars svg.star.on { fill: #f5b82e; }
+.cover .card-stars:active { transform: scale(.9); }
 
 .card-title {
   margin: 8px 0 0;
@@ -426,7 +430,7 @@ h1 {
   font-weight: 600;
 }
 .stat-value { font-size: 23px; font-weight: 800; letter-spacing: -.6px; }
-.stat-card.heart .stat-value { color: var(--red); }
+.stat-card.stars .stat-value { color: #b9821a; }
 
 .panel {
   margin: 12px 16px 0;
@@ -611,20 +615,19 @@ h1 {
   background: #fff;
 }
 .detail-cover img.err { opacity: 0; }
-.detail-cover .cover-heart {
+.detail-cover .cover-stars {
   position: absolute;
-  left: 7px;
-  bottom: 5px;
+  left: 8px;
+  bottom: 6px;
   z-index: 4;
-  display: grid;
-  place-items: center;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .3));
+  display: inline-flex;
+  padding: 3px 8px 3px 7px;
+  border-radius: 999px;
+  background: rgba(255, 252, 240, .92);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .22);
 }
-.detail-cover .cover-heart svg {
-  width: 30px;
-  height: 30px;
-  fill: #f0403c;
-}
+.detail-cover .cover-stars .star-row { display: inline-flex; gap: 2px; }
+.detail-cover .cover-stars svg.star { width: 17px; height: 17px; fill: #f5b82e; }
 .detail-title {
   margin: 0;
   font-size: 24px;
@@ -1095,7 +1098,7 @@ h1 { color: #3b3532; letter-spacing: -.8px; }
 .chip.tint-apricot:not(.is-active) { background: #fde9d7; border-color: #f7dcc3; color: #8a6144; }
 .chip.tint-lavender:not(.is-active) { background: #ece7f7; border-color: #e1d9f2; color: #63557f; }
 .chip.tint-sage:not(.is-active) { background: #eaf1e6; border-color: #dfe9d9; color: #5a6b52; }
-.chip.heart:not(.is-active) { background: var(--surface); }
+.chip.stars:not(.is-active) { background: var(--surface); }
 
 /* 읽기 상태 필터 줄 */
 .chips.chips-status { padding-top: 0; padding-bottom: 12px; gap: 7px; }
@@ -1143,11 +1146,9 @@ h1 { color: #3b3532; letter-spacing: -.8px; }
       rgba(60, 40, 30, .06) 100%);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22);
 }
-.cover .heart { z-index: 5; }
-.cover .heart svg { filter: drop-shadow(0 1px 4px rgba(60, 40, 30, .5)); }
-.cover .heart.on svg { fill: #e07a72; }
-.detail-cover .cover-heart { z-index: 6; }
-.detail-cover .cover-heart svg { fill: #e07a72; }
+.cover .card-stars { z-index: 5; }
+.detail-cover .cover-stars { z-index: 6; }
+.detail-cover .cover-stars svg.star { fill: #eaa41a; }
 
 /* 표지가 없을 때 — 파스텔 미니멀 표지 */
 .cover-fallback {
@@ -1225,7 +1226,8 @@ h1 { color: #3b3532; letter-spacing: -.8px; }
 .stat-card:nth-child(3) { background: linear-gradient(160deg, #fbe9e6, #f7dcd8); }
 .stat-label { color: #8a7d75; }
 .stat-value { color: #3b3532; }
-.stat-card.heart .stat-value { color: #c9746c; }
+.stat-card.stars { background: linear-gradient(160deg, #fdf7e4, #fbe9c4); }
+.stat-card.stars .stat-value { color: #b9821a; }
 .stat-note { margin: 10px 18px 0; font-size: 12.5px; color: #a19086; line-height: 1.5; }
 
 .panel { background: var(--surface); }
@@ -1624,7 +1626,7 @@ h1 { font-size: 25px; }
 .grid .card { transition: transform .16s ease; }
 .grid .card:active { transform: scale(.975); }
 .grid .card .cover { border-radius: 6px 14px 14px 6px; }
-.grid .card .heart svg { width: 23px; height: 23px; }
+.grid .card .card-stars svg.star { width: 13px; height: 13px; }
 
 /* 상세 표지는 살짝 기울여 스크랩북 느낌 (읽기는 그대로) */
 .detail-cover { transform: rotate(-1.3deg); }
@@ -1696,14 +1698,15 @@ h1 { font-size: 25px; }
   color: var(--accent-ink);
 }
 
-/* 표지 배지 · 하트는 조금 더 또렷하게 */
+/* 표지 배지 · 별점은 조금 더 또렷하게 */
 .cover-badge { font-size: 10px; padding: 2px 8px; }
-.cover .heart.on svg { fill: #e2695f; }
+.cover .card-stars svg.star.on { fill: #f5b82e; }
 
 @media (max-width: 360px) {
   .tabs-3 .tab { font-size: 12.5px; gap: 3px; }
   .tabs-3 .tab-emoji { font-size: 13px; }
   h1 { font-size: 23px; }
+  .summary { font-size: 13.5px; gap: 3px 6px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1712,3 +1715,102 @@ h1 { font-size: 25px; }
 
 /* 통계 화면에서는 검색줄을 감춥니다 ([hidden]이 display:flex에 밀리지 않게) */
 .search[hidden] { display: none; }
+
+/* ============================================================
+   노란 별 별점 — 칩·카드·상세·등록 화면 (0~3개)
+   ============================================================ */
+
+/* 별점 필터 칩 */
+.chip.stars.is-active {
+  background: #f8cf6d;
+  border-color: #efbc48;
+  color: #5b4308;
+}
+.chip.stars.is-active .chip-stars { color: #7a5606; }
+.chip.stars.is-active .chip-num { color: #7a5606; opacity: .75; }
+
+/* 표지 위 별 3개 — 누르면 별점이 한 개씩 늘어나요 */
+.cover .card-stars {
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  transition: transform .14s ease, background .14s ease;
+}
+.cover .card-stars svg.star.on { filter: drop-shadow(0 1px 1px rgba(150, 100, 6, .28)); }
+.cover .card-stars:not(.on) { background: rgba(255, 251, 240, .86); }
+
+/* 상세·등록 화면의 별점 고르기 */
+.rating-control {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 8px 14px 8px 12px;
+  border-radius: 16px;
+  background: #fdf6e3;
+  box-shadow: inset 0 0 0 1px #f6e6c2;
+}
+.rating-label { font-size: 13.5px; font-weight: 800; color: #93857a; }
+.rating-stars { display: inline-flex; align-items: center; gap: 2px; }
+
+.rating-picker {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 16px;
+  background: #fdf6e3;
+  box-shadow: inset 0 0 0 1px #f6e6c2;
+}
+
+.star-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform .14s ease;
+}
+.star-btn:active { transform: scale(.87); }
+.star-btn svg {
+  width: 26px;
+  height: 26px;
+  fill: #e9dfd0;
+  transition: fill .14s ease, transform .14s ease;
+}
+.star-btn.on svg { fill: #f5b82e; filter: drop-shadow(0 1px 2px rgba(170, 116, 8, .3)); }
+.rating-picker .star-btn { width: 40px; height: 40px; }
+.rating-picker .star-btn svg { width: 32px; height: 32px; }
+
+.rate-clear {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #ecdcb8;
+  border-radius: 999px;
+  background: #fffdf7;
+  color: #8b7d72;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .14s ease, color .14s ease;
+}
+.rate-clear:active { transform: scale(.96); }
+.rate-clear.is-on { background: #f6e6bd; border-color: #e6cd9a; color: #7a5a12; }
+
+/* 요약 줄 — 숫자와 단위가 줄바꿈으로 갈라지지 않게 */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 8px;
+}
+.summary .sum-part,
+.summary .sum-stars { white-space: nowrap; }
+.summary .sum-stars { color: #c08e1b; font-weight: 700; }
+.summary .sum-stars:not(.on) { color: #a3948a; font-weight: 500; }

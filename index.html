@@ -20,8 +20,8 @@
 <body>
 
 <svg class="sprite" aria-hidden="true" focusable="false">
-  <symbol id="i-heart" viewBox="0 0 24 24">
-    <path d="M12 20.7c-.35 0-.7-.12-.98-.36C8.9 18.5 2.1 13.2 2.1 8.15 2.1 5.02 4.55 2.5 7.6 2.5c1.66 0 3.23.76 4.4 2.05 1.17-1.29 2.74-2.05 4.4-2.05 3.05 0 5.5 2.52 5.5 5.65 0 5.05-6.8 10.35-8.92 12.19-.28.24-.63.36-.98.36z"/>
+  <symbol id="i-star" viewBox="0 0 24 24">
+    <path d="M12 2.4l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.42l-5.88 3.09 1.12-6.55L2.48 9.32l6.58-.96z"/>
   </symbol>
 </svg>
 
@@ -30,7 +30,7 @@
     <div class="header-top">
       <div class="header-titles">
         <h1>나만의 기록 <span class="h1-emoji" aria-hidden="true">🗂️</span></h1>
-        <p class="summary" id="summary">총 0권 · ❤️ 0권</p>
+        <p class="summary" id="summary">총 0권 · ⭐ 0권</p>
       </div>
       <button type="button" class="btn-primary" id="btn-add">+ 등록</button>
     </div>
@@ -93,9 +93,9 @@
           <span class="stat-label" id="stat-year-label">올해 완독</span>
           <strong class="stat-value" id="stat-year">0권</strong>
         </div>
-        <div class="stat-card heart">
-          <span class="stat-label">❤️ 하트</span>
-          <strong class="stat-value" id="stat-heart">0권</strong>
+        <div class="stat-card stars" id="stat-star-card">
+          <span class="stat-label" id="stat-star-label">⭐ 별 준 책</span>
+          <strong class="stat-value" id="stat-star">0권</strong>
         </div>
       </div>
       <p class="stat-note" id="stat-note"></p>
@@ -221,10 +221,10 @@
         <textarea class="input" id="f-memo" name="memo" rows="2" placeholder="짧은 감상을 남겨보세요."></textarea>
       </div>
 
-      <label class="switch-row" for="f-heart">
-        <span>❤️ 하트 표시</span>
-        <span class="switch"><input type="checkbox" id="f-heart" name="heart"><span class="switch-track" aria-hidden="true"></span></span>
-      </label>
+      <div class="field">
+        <label id="f-rating-label">별점</label>
+        <div class="rating-picker" id="f-rating" role="group" aria-label="별점 선택 (노란 별 0~3개)"></div>
+      </div>
     </form>
     <div class="sheet-actions">
       <button type="button" class="btn-soft" id="form-cancel">취소</button>

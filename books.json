@@ -1,7 +1,7 @@
 {
   "app": "나만의 기록",
   "version": 3,
-  "updatedAt": "2026-11-17T00:54:39Z",
+  "updatedAt": "2026-11-17T08:40:00Z",
   "count": 19,
   "books": [
     {
@@ -15,7 +15,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=mZNTEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T12:46:51.282Z",
       "createdAt": "2026-11-16T12:46:51.282Z"
@@ -31,7 +31,7 @@
       "status": "완독",
       "cover": "https://contents.kyobobook.co.kr/sih/fit-in/458x0/pdt/9791124137635.jpg",
       "memo": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [
         {
           "id": "6c8dada2-9f60-4bce-bb27-ecd171b32210",
@@ -60,7 +60,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=DcDNEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [],
       "createdAt": "2026-11-15T06:37:19.549Z"
     },
@@ -75,7 +75,7 @@
       "status": "읽는 중",
       "cover": "https://books.google.com/books/content?id=SiIstsuAOsIC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T01:22:27.903Z",
       "createdAt": "2026-11-16T01:22:27.903Z"
@@ -91,7 +91,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=SqHoDwAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [],
       "updatedAt": "2026-11-16T12:56:43.777Z",
       "createdAt": "2026-11-16T12:56:43.776Z"
@@ -107,7 +107,7 @@
       "status": "완독",
       "cover": "https://covers.openlibrary.org/b/isbn/9788937473005-L.jpg?default=false",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T12:56:12.364Z",
       "createdAt": "2026-11-16T12:56:12.364Z"
@@ -123,7 +123,7 @@
       "status": "완독",
       "cover": "https://contents.kyobobook.co.kr/sih/fit-in/458x0/pdt/9791191824308.jpg",
       "memo": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [],
       "updatedAt": "2026-11-16T12:55:23.497Z",
       "createdAt": "2026-11-16T12:55:23.497Z"
@@ -139,7 +139,7 @@
       "status": "완독",
       "cover": "https://contents.kyobobook.co.kr/sih/fit-in/458x0/pdt/9791156754305.jpg",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T12:54:56.309Z",
       "createdAt": "2026-11-16T12:54:56.309Z"
@@ -155,7 +155,7 @@
       "status": "완독",
       "cover": "https://covers.openlibrary.org/b/id/11654300-L.jpg",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T12:54:26.012Z",
       "createdAt": "2026-11-16T12:54:26.012Z"
@@ -171,7 +171,7 @@
       "status": "읽는 중",
       "cover": "https://books.google.com/books/content?id=Wq9PcjjX6_sC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T12:52:46.513Z",
       "createdAt": "2026-11-16T12:52:46.513Z"
@@ -187,7 +187,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=9sZ7hndYtxcC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [],
       "updatedAt": "2026-11-16T12:52:16.822Z",
       "createdAt": "2026-11-16T12:52:13.545Z"
@@ -203,7 +203,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=yFluEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [],
       "updatedAt": "2026-11-16T12:49:48.410Z",
       "createdAt": "2026-11-16T12:49:45.025Z"
@@ -219,7 +219,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=oCkRvMFSWjkC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [],
       "updatedAt": "2026-11-16T12:50:43.795Z",
       "createdAt": "2026-11-16T03:46:47.672Z"
@@ -235,7 +235,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=VG9zEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T12:49:08.518Z",
       "createdAt": "2026-11-16T12:49:08.518Z"
@@ -251,7 +251,7 @@
       "status": "중단",
       "cover": "https://books.google.com/books/content?id=X71ZEAAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T12:48:10.602Z",
       "createdAt": "2026-11-16T12:48:10.602Z"
@@ -267,7 +267,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=AE0tEAAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": true,
+      "rating": 3,
       "quotes": [],
       "updatedAt": "2026-11-16T12:49:56.927Z",
       "createdAt": "2026-11-16T12:46:07.871Z"
@@ -283,7 +283,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=2hSlEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T12:47:30.422Z",
       "createdAt": "2026-11-16T12:47:30.422Z"
@@ -299,7 +299,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=UZ2jEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T12:51:12.524Z",
       "createdAt": "2026-11-14T07:51:12.290Z"
@@ -315,7 +315,7 @@
       "status": "완독",
       "cover": "https://books.google.com/books/content?id=ffb-EAAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "heart": false,
+      "rating": 0,
       "quotes": [],
       "updatedAt": "2026-11-16T12:48:38.262Z",
       "createdAt": "2026-11-16T12:48:38.262Z"
