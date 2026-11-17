@@ -1,7 +1,7 @@
 {
-  "name": "나만의 서재",
-  "short_name": "서재",
-  "description": "내가 읽은 책을 한 권씩 모으는 나만의 서재",
+  "name": "나만의 기록",
+  "short_name": "나만의 기록",
+  "description": "읽은 책, 본 영상, 정주행한 웹툰·웹소설을 한곳에 모으는 나만의 기록",
   "lang": "ko",
   "dir": "ltr",
   "start_url": "./",
@@ -9,9 +9,9 @@
   "id": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f3f3f5",
-  "theme_color": "#f3f3f5",
-  "categories": ["books", "lifestyle", "productivity"],
+  "background_color": "#fbf8f6",
+  "theme_color": "#fbf8f6",
+  "categories": ["books", "entertainment", "lifestyle", "productivity"],
   "icons": [
     {
       "src": "icons/icon-192.png",

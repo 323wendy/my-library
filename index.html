@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>나만의 서재 📚</title>
-<meta name="description" content="내가 읽은 책을 한 권씩 모으는 나만의 서재. 서재 보기, 마음에 든 문구, 독서 통계, 데이터 백업까지.">
-<meta name="theme-color" content="#f3f3f5">
+<title>나만의 기록</title>
+<meta name="description" content="읽은 책, 본 영상, 정주행한 웹툰·웹소설을 한곳에 모으는 나만의 기록. 표지 보기, 마음에 든 문구, 통계, 데이터 백업까지.">
+<meta name="theme-color" content="#fbf8f6">
 <meta name="color-scheme" content="light">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="나만의 서재">
+<meta name="apple-mobile-web-app-title" content="나만의 기록">
 
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -29,35 +29,45 @@
   <header class="app-header">
     <div class="header-top">
       <div class="header-titles">
-        <h1>나만의 서재 📚</h1>
-        <p class="summary" id="summary">총 0권의 서재 · ❤️ 0권</p>
+        <h1>나만의 기록 <span class="h1-emoji" aria-hidden="true">🗂️</span></h1>
+        <p class="summary" id="summary">총 0권 · ❤️ 0권</p>
       </div>
-      <button type="button" class="btn-primary" id="btn-add">+ 책 등록</button>
+      <button type="button" class="btn-primary" id="btn-add">+ 등록</button>
     </div>
 
-    <button type="button" class="sync-pill" id="btn-sync" data-state="off" aria-label="동기화 설정 열기">
-      <span class="sync-pill-label" id="sync-label">☁️ 동기화 미연결</span>
-    </button>
+    <div class="header-tools">
+      <button type="button" class="tool-pill" id="btn-view" aria-pressed="false">📊 통계</button>
+      <button type="button" class="sync-pill" id="btn-sync" data-state="off" aria-label="동기화 설정 열기">
+        <span class="sync-pill-label" id="sync-label">☁️ 동기화 미연결</span>
+      </button>
+    </div>
 
-    <div class="search">
+    <nav class="tabs tabs-3" id="collection-tabs" role="tablist" aria-label="기록 종류">
+      <button type="button" class="tab is-active" role="tab" id="tab-books" aria-selected="true" data-collection="books">
+        <span class="tab-emoji" aria-hidden="true">📚</span><span class="tab-text">독서</span>
+      </button>
+      <button type="button" class="tab" role="tab" id="tab-videos" aria-selected="false" data-collection="videos">
+        <span class="tab-emoji" aria-hidden="true">🎬</span><span class="tab-text">영상</span>
+      </button>
+      <button type="button" class="tab" role="tab" id="tab-webtoons" aria-selected="false" data-collection="webtoons">
+        <span class="tab-emoji" aria-hidden="true">🖍️</span><span class="tab-text">웹툰·웹소설</span>
+      </button>
+    </nav>
+
+    <div class="search" id="search-box">
       <span class="search-icon" aria-hidden="true">🔍</span>
-      <input type="search" id="search" placeholder="책 제목, 저자, 한 줄 평, 문구 검색..." autocomplete="off" enterkeyhint="search" aria-label="책 제목, 저자, 한 줄 평, 문구 검색">
+      <input type="search" id="search" placeholder="책 제목, 저자, 한 줄 평, 문구 검색" autocomplete="off" enterkeyhint="search" aria-label="검색">
       <button type="button" class="search-clear" id="search-clear" aria-label="검색 지우기" hidden>×</button>
-    </div>
-
-    <div class="tabs" role="tablist" aria-label="보기 선택">
-      <button type="button" class="tab is-active" role="tab" id="tab-library" aria-selected="true" data-tab="library">서재 보기</button>
-      <button type="button" class="tab" role="tab" id="tab-stats" aria-selected="false" data-tab="stats">독서 통계</button>
     </div>
   </header>
 
   <main class="app-main">
-    <!-- 서재 보기 -->
-    <section class="view" id="view-library" role="tabpanel" aria-labelledby="tab-library">
-      <div class="chips" id="chips" role="group" aria-label="카테고리 필터"></div>
-    <div class="chips chips-status" id="status-chips" role="group" aria-label="읽기 상태 필터"></div>
+    <!-- 목록 보기 -->
+    <section class="view" id="view-list" role="tabpanel" aria-labelledby="collection-tabs">
+      <div class="chips" id="chips" role="group" aria-label="분류 필터"></div>
+      <div class="chips chips-status" id="status-chips" role="group" aria-label="상태 필터"></div>
       <div class="notice" id="sample-note" hidden>
-        <p id="sample-note-text">샘플로 넣어둔 책이 있어요. 지우고 내 서재를 채워보세요.</p>
+        <p id="sample-note-text">샘플로 넣어둔 기록이 있어요. 지우고 내 기록을 채워보세요.</p>
         <div class="notice-actions">
           <button type="button" class="primary" id="btn-clear-samples">샘플 지우기</button>
           <button type="button" id="btn-keep-samples">그대로 두기</button>
@@ -65,21 +75,22 @@
       </div>
       <div class="grid" id="grid"></div>
       <div class="empty" id="empty" hidden>
-        <span class="empty-emoji" aria-hidden="true">📚</span>
-        <p id="empty-text">조건에 맞는 책이 없어요.</p>
-        <button type="button" class="btn-soft" id="btn-empty-add">책 등록하기</button>
+        <span class="empty-emoji" id="empty-emoji" aria-hidden="true">📚</span>
+        <p id="empty-text">조건에 맞는 기록이 없어요.</p>
+        <button type="button" class="btn-soft" id="btn-empty-add">등록하기</button>
       </div>
     </section>
 
-    <!-- 독서 통계 -->
-    <section class="view" id="view-stats" role="tabpanel" aria-labelledby="tab-stats" hidden>
+    <!-- 통계 -->
+    <section class="view" id="view-stats" role="tabpanel" aria-labelledby="collection-tabs" hidden>
+      <p class="stats-head" id="stats-head">📚 독서 통계</p>
       <div class="stat-cards">
         <div class="stat-card">
-          <span class="stat-label">총 완독</span>
+          <span class="stat-label" id="stat-total-label">총 완독</span>
           <strong class="stat-value" id="stat-total">0권</strong>
         </div>
         <div class="stat-card">
-          <span class="stat-label">올해 완독</span>
+          <span class="stat-label" id="stat-year-label">올해 완독</span>
           <strong class="stat-value" id="stat-year">0권</strong>
         </div>
         <div class="stat-card heart">
@@ -90,23 +101,23 @@
       <p class="stat-note" id="stat-note"></p>
 
       <section class="panel">
-        <h2>연도별 완독 통계 🏆</h2>
+        <h2 id="panel-year-title">연도별 완독 통계 🏆</h2>
         <div class="bars" id="bars-year"></div>
       </section>
 
       <section class="panel">
-        <h2>월별 완독 통계 📅</h2>
+        <h2>월별 통계 📅</h2>
         <div class="bars" id="bars-month"></div>
       </section>
 
       <section class="panel">
-        <h2>카테고리별 분포 🏷️</h2>
-        <div class="bars" id="bars-category"></div>
+        <h2 id="panel-kind-title">카테고리별 분포 🏷️</h2>
+        <div class="bars" id="bars-kind"></div>
       </section>
 
       <section class="panel">
-        <h2>서재 데이터 복사 &amp; 이동 🔄</h2>
-        <p class="panel-note">크롬에서 등록한 책들을 삼성 인터넷으로 옮기거나 백업할 때 사용하세요.</p>
+        <h2>데이터 복사 &amp; 이동 🔄</h2>
+        <p class="panel-note" id="data-note">지금 탭의 기록을 JSON으로 복사하거나, 복사해 둔 기록을 불러옵니다.</p>
         <div class="data-actions">
           <button type="button" class="btn-soft" id="btn-copy">📤 데이터 복사하기</button>
           <button type="button" class="btn-soft" id="btn-import">📥 데이터 불러오기</button>
@@ -116,11 +127,11 @@
   </main>
 </div>
 
-<!-- 책 상세 -->
+<!-- 상세 -->
 <div class="modal" id="detail-modal" hidden>
   <div class="sheet full" role="dialog" aria-modal="true" aria-labelledby="detail-heading">
     <div class="sheet-head">
-      <h2 id="detail-heading">책 상세 정보</h2>
+      <h2 id="detail-heading">기록 상세</h2>
       <button type="button" class="icon-btn" id="detail-close" aria-label="닫기">×</button>
     </div>
     <div class="detail-body" id="detail-body"></div>
@@ -131,19 +142,19 @@
   </div>
 </div>
 
-<!-- 책 등록 / 수정 -->
+<!-- 등록 / 수정 -->
 <div class="modal" id="form-modal" hidden>
   <div class="sheet full" role="dialog" aria-modal="true" aria-labelledby="form-heading">
     <div class="sheet-head">
-      <h2 id="form-heading">책 등록</h2>
+      <h2 id="form-heading">기록 등록</h2>
       <button type="button" class="icon-btn" id="form-close" aria-label="닫기">×</button>
     </div>
-    <form class="form-body" id="book-form" novalidate>
+    <form class="form-body" id="item-form" novalidate>
       <div class="field">
-        <label for="f-title">책 제목 <span class="req">*</span></label>
+        <label for="f-title" id="f-title-label">제목 <span class="req">*</span></label>
         <input class="input" id="f-title" name="title" type="text" placeholder="예: 쇳돌" autocomplete="off" required>
         <button type="button" class="btn-lookup" id="f-lookup">🔍 표지·저자 찾기</button>
-        <p class="field-error" id="f-title-error" hidden>책 제목을 입력해 주세요.</p>
+        <p class="field-error" id="f-title-error" hidden>제목을 입력해 주세요.</p>
         <div class="lookup" id="f-lookup-panel" hidden>
           <p class="lookup-status" id="f-lookup-status" role="status" aria-live="polite"></p>
           <ul class="lookup-list" id="f-lookup-list"></ul>
@@ -151,30 +162,45 @@
       </div>
 
       <div class="field">
-        <label for="f-author">저자</label>
-        <input class="input" id="f-author" name="author" type="text" placeholder="예: 이라영" autocomplete="off">
+        <label for="f-creator" id="f-creator-label">저자</label>
+        <input class="input" id="f-creator" name="creator" type="text" placeholder="예: 이라영" autocomplete="off">
       </div>
 
       <div class="field">
-        <label>읽기 상태</label>
-        <div class="cat-chips status-chips" id="f-status" role="group" aria-label="읽기 상태 선택"></div>
+        <label id="f-status-label">상태</label>
+        <div class="cat-chips status-chips" id="f-status" role="group" aria-label="상태 선택"></div>
       </div>
 
       <div class="date-row">
         <div class="field">
-          <label for="f-start">읽기 시작한 날짜</label>
+          <label for="f-start" id="f-start-label">시작한 날짜</label>
           <input class="input" id="f-start" name="startDate" type="date">
         </div>
         <div class="field">
-          <label for="f-end">끝난 날짜</label>
+          <label for="f-end" id="f-end-label">끝난 날짜</label>
           <input class="input" id="f-end" name="endDate" type="date">
         </div>
       </div>
 
       <div class="field">
-        <label>카테고리</label>
-        <div class="cat-chips" id="f-cats" role="group" aria-label="카테고리 선택"></div>
-        <input class="input cat-custom" id="f-cat-custom" type="text" placeholder="카테고리 직접 입력" hidden autocomplete="off">
+        <label id="f-kind-label">카테고리</label>
+        <div class="cat-chips" id="f-kinds" role="group" aria-label="분류 선택"></div>
+        <input class="input cat-custom" id="f-kind-custom" type="text" placeholder="카테고리 직접 입력" hidden autocomplete="off">
+      </div>
+
+      <div class="field" id="f-platform-field" hidden>
+        <label for="f-platform">플랫폼</label>
+        <input class="input" id="f-platform" name="platform" type="text" placeholder="네이버웹툰, 카카오페이지, 리디 …" list="f-platform-list" autocomplete="off">
+        <datalist id="f-platform-list">
+          <option value="네이버웹툰"></option>
+          <option value="네이버시리즈"></option>
+          <option value="카카오페이지"></option>
+          <option value="카카오웹툰"></option>
+          <option value="리디"></option>
+          <option value="레진코믹스"></option>
+          <option value="문피아"></option>
+          <option value="노벨피아"></option>
+        </datalist>
       </div>
 
       <div class="field">
@@ -185,8 +211,13 @@
         </div>
       </div>
 
+      <div class="field" id="f-link-field" hidden>
+        <label for="f-link">링크</label>
+        <input class="input" id="f-link" name="link" type="text" inputmode="url" placeholder="https://... (작품·작품정보 페이지)" autocomplete="off">
+      </div>
+
       <div class="field">
-        <label for="f-memo">한 줄 평</label>
+        <label for="f-memo" id="f-memo-label">한 줄 평</label>
         <textarea class="input" id="f-memo" name="memo" rows="2" placeholder="짧은 감상을 남겨보세요."></textarea>
       </div>
 
@@ -210,11 +241,11 @@
       <button type="button" class="icon-btn" id="import-close" aria-label="닫기">×</button>
     </div>
     <div class="form-body import-body">
-      <p class="form-help">복사해 둔 서재 데이터(JSON)를 붙여넣거나 파일로 선택하세요.</p>
+      <p class="form-help" id="import-help">복사해 둔 기록 데이터(JSON)를 붙여넣거나 파일로 선택하세요.</p>
 
       <div class="field">
         <label for="import-text">붙여넣기</label>
-        <textarea class="input" id="import-text" rows="7" placeholder='{"books": [ ... ]}' spellcheck="false"></textarea>
+        <textarea class="input" id="import-text" rows="7" placeholder='{ "items": [ ... ] }' spellcheck="false"></textarea>
       </div>
 
       <div class="field">
@@ -228,11 +259,11 @@
         <legend>불러오는 방법</legend>
         <label class="mode">
           <input type="radio" name="import-mode" value="replace" checked>
-          <span><strong>기존 책을 모두 지우고 불러오기</strong><br><small>다른 기기로 옮길 때 좋아요. 현재 기기에 있던 책 목록은 사라져요.</small></span>
+          <span><strong>기존 기록을 모두 지우고 불러오기</strong><br><small>다른 기기로 옮길 때 좋아요. 현재 기기에 있던 이 탭의 기록은 사라져요.</small></span>
         </label>
         <label class="mode">
           <input type="radio" name="import-mode" value="merge">
-          <span><strong>지금 서재에 더해서 불러오기</strong><br><small>같은 책은 불러온 내용으로 바뀌고, 새 책만 추가돼요.</small></span>
+          <span><strong>지금 기록에 더해서 불러오기</strong><br><small>같은 항목은 불러온 내용으로 바뀌고, 새 항목만 추가돼요.</small></span>
         </label>
       </fieldset>
 
@@ -253,7 +284,7 @@
       <button type="button" class="icon-btn" id="sync-close" aria-label="닫기">×</button>
     </div>
     <div class="form-body sync-body">
-      <p class="sync-lead">폰과 PC에서 같은 서재를 함께 써요. 책을 더하거나 고치면 GitHub 저장소의 <b>books.json</b>에 바로 저장되고, 다른 기기에서도 그대로 보여요.</p>
+      <p class="sync-lead">폰과 PC에서 같은 기록을 함께 써요. 기록을 더하거나 고치면 GitHub 저장소의 <b>books.json</b> · <b>videos.json</b> · <b>webtoons.json</b>에 바로 저장되고, 다른 기기에서도 그대로 보여요.</p>
 
       <div class="sync-status" id="sync-status-card">
         <span class="sync-dot" id="sync-dot" data-state="off" aria-hidden="true"></span>
@@ -272,7 +303,7 @@
         <label for="sync-token">GitHub 토큰 (Personal access token)</label>
         <input class="input" id="sync-token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_… 또는 github_pat_…">
         <p class="field-hint"><a href="https://github.com/settings/tokens/new?description=my-library-sync&amp;scopes=repo" target="_blank" rel="noopener noreferrer">🔑 GitHub에서 토큰 만들기</a> — 권한은 <b>repo</b>만 체크하면 돼요.</p>
-        <p class="field-hint">토큰은 이 기기 브라우저에만 저장되고, 서재 데이터나 저장소에는 담기지 않아요.</p>
+        <p class="field-hint">토큰은 이 기기 브라우저에만 저장되고, 기록 데이터나 저장소에는 담기지 않아요.</p>
       </div>
 
       <p class="sync-msg" id="sync-msg" role="status" aria-live="polite"></p>
@@ -285,8 +316,8 @@
           <li>나오는 <b>ghp_…</b> 값을 복사해 위 칸에 붙여넣고 <b>동기화 연결 테스트 및 지금 동기화</b>를 눌러요.</li>
           <li>다른 기기에서도 한 번만 같은 방법으로 연결하면, 그때부터는 양쪽이 자동으로 맞춰져요.</li>
         </ol>
-        <p>토큰을 끊고 싶으면 <b>연결 해제</b>를 누르면 돼요. 서재 데이터는 이 기기에 그대로 남아요.</p>
-        <p>이 저장소는 공개 저장소라, 올린 서재 목록(책 제목·한 줄 평·문구)은 누구나 볼 수 있어요. 공개하고 싶지 않으면 비공개 저장소를 하나 만들어 위 <b>저장소</b> 칸에 그 이름을 적으면 돼요.</p>
+        <p>토큰을 끊고 싶으면 <b>연결 해제</b>를 누르면 돼요. 기록은 이 기기에 그대로 남아요.</p>
+        <p>이 저장소는 공개 저장소라, 올린 기록(제목·한 줄 평·문구)은 누구나 볼 수 있어요. 공개하고 싶지 않으면 비공개 저장소를 하나 만들어 위 <b>저장소</b> 칸에 그 이름을 적으면 돼요.</p>
       </details>
     </div>
     <div class="sheet-actions sync-actions">
@@ -299,8 +330,8 @@
 <!-- 확인 대화상자 -->
 <div class="modal center" id="confirm-modal" hidden>
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-    <h2 id="confirm-title">책을 삭제할까요?</h2>
-    <p id="confirm-message">삭제한 책은 되돌릴 수 없어요.</p>
+    <h2 id="confirm-title">삭제할까요?</h2>
+    <p id="confirm-message">삭제한 기록은 되돌릴 수 없어요.</p>
     <div class="dialog-actions">
       <button type="button" class="btn-soft" id="confirm-cancel">취소</button>
       <button type="button" class="btn-danger" id="confirm-ok">삭제</button>

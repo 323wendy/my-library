@@ -1,0 +1,42 @@
+{
+  "app": "나만의 기록",
+  "version": 1,
+  "updatedAt": "2026-11-17T00:54:39Z",
+  "count": 2,
+  "items": [
+    {
+      "id": "2d69807e-edb8-435d-a45a-ae08fc103ff0",
+      "title": "어두운 바다의 등불이 되어",
+      "creator": "연산호",
+      "kind": "웹소설",
+      "platform": "리디",
+      "startDate": "2026-08-03",
+      "endDate": "2026-09-06",
+      "status": "완독",
+      "cover": "https://img.ridicdn.net/cover/425270925/xxlarge",
+      "note": "",
+      "heart": true,
+      "quotes": [],
+      "link": "",
+      "updatedAt": "2026-11-16T12:53:54.515Z",
+      "createdAt": "2026-11-16T12:53:54.514Z"
+    },
+    {
+      "id": "594e1111-1c2d-41af-bbc8-bc0944a2b1ab",
+      "title": "그저 여명일 뿐",
+      "creator": "강기 (원작 우지혜)",
+      "kind": "웹툰",
+      "platform": "리디",
+      "startDate": "2026-01-13",
+      "endDate": "2026-01-15",
+      "status": "완독",
+      "cover": "https://img.ridicdn.net/cover/1746020571/xxlarge",
+      "note": "",
+      "heart": true,
+      "quotes": [],
+      "link": "",
+      "updatedAt": "2026-11-16T13:10:44Z",
+      "createdAt": "2026-11-16T13:10:44Z"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
-/* 나만의 서재 — 오프라인 캐시 (앱 껍데기만 저장, books.json은 항상 새로 확인) */
-const CACHE = 'shelf-v5';
+/* 나만의 기록 — 오프라인 캐시
+   앱 껍데기만 저장하고, 기록 데이터(books.json · videos.json · webtoons.json)는
+   항상 새로 확인합니다. */
+const CACHE = 'shelf-v6';
 const SHELL = [
   './',
   './index.html',
@@ -12,6 +14,7 @@ const SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
+const DATA_FILES = ['/books.json', '/videos.json', '/webtoons.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -36,16 +39,16 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // 공용 서재 데이터는 네트워크 우선 (GitHub에 새 책을 올리면 바로 보이도록)
-  if (url.pathname.endsWith('/books.json')) {
+  // 기록 데이터는 네트워크 우선 (GitHub에 새 기록을 올리면 바로 보이도록)
+  if (DATA_FILES.some((name) => url.pathname.endsWith(name))) {
     event.respondWith(
       fetch(request, { cache: 'no-store' })
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put('./books.json', copy)).catch(() => {});
+          caches.open(CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
           return response;
         })
-        .catch(() => caches.match('./books.json'))
+        .catch(() => caches.match(request).then((hit) => hit || caches.match('./' + url.pathname.split('/').pop())))
     );
     return;
   }

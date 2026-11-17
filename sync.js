@@ -1,7 +1,9 @@
 /* ============================================================
-   나만의 서재 — 기기 간 동기화
-   GitHub Contents API로 저장소의 books.json을 읽고 씁니다.
-   토큰과 설정은 이 브라우저(localStorage)에만 두고, 서재 데이터나
+   나만의 기록 — 기기 간 동기화
+   GitHub Contents API로 저장소의 books.json · videos.json ·
+   webtoons.json을 각각 읽고 씁니다. 한 기록 종류를 저장해도
+   다른 파일은 건드리지 않습니다.
+   토큰과 설정은 이 브라우저(localStorage)에만 두고, 기록 데이터나
    저장소에는 절대 담지 않습니다.
    ============================================================ */
 (function (root) {
@@ -11,7 +13,6 @@
   var CFG_KEY = 'reading-app:sync';
   var API = 'https://api.github.com';
   var DEFAULT_REPO = '323wendy/my-library';
-  var FILE = 'books.json';
   var PUSH_DELAY = 900;     /* 연달아 고칠 때 커밋이 쏟아지지 않게 잠깐 모읍니다 */
   var POLL_MS = 45000;      /* 다른 기기의 변경을 확인하는 주기 */
 
@@ -23,16 +24,22 @@
     phase: 'off',           /* off | syncing | synced | error */
     message: '',
     lastSyncAt: '',
-    sha: null,
-    remoteFingerprint: '',
-    firstSyncDone: false,
+    files: {},              /* id → { sha, fingerprint, firstSyncDone } */
+    pushTimers: {},
     syncing: null,
-    pushTimer: null,
     pollTimer: null,
     lastError: null,
     windowBound: false,
-    lastPullAt: 0
+    lastPullAt: 0,
+    counts: {}              /* id → 마지막으로 확인한 기록 수 */
   };
+
+  function coll(id) { return C.collection(id); }
+
+  function fileState(id) {
+    if (!st.files[id]) st.files[id] = { sha: null, fingerprint: '', firstSyncDone: false };
+    return st.files[id];
+  }
 
   /* ---------------- 설정(토큰·저장소) ---------------- */
 
@@ -70,6 +77,15 @@
 
   /* ---------------- 상태 알림 ---------------- */
 
+  function summaryText() {
+    var parts = [];
+    C.COLLECTIONS.forEach(function (c) {
+      var n = st.counts[c.id];
+      if (typeof n === 'number') parts.push(c.label + ' ' + n + c.unit);
+    });
+    return parts.join(' · ');
+  }
+
   function getStatus() {
     return {
       connected: !!st.token,
@@ -77,7 +93,8 @@
       phase: st.phase,
       message: st.message,
       lastSyncAt: st.lastSyncAt,
-      error: st.lastError ? String(st.lastError.message || '') : ''
+      error: st.lastError ? String(st.lastError.message || '') : '',
+      counts: Object.assign({}, st.counts)
     };
   }
 
@@ -145,8 +162,8 @@
     return '/repos/' + st.repo;
   }
 
-  function filePath() {
-    return repoPath() + '/contents/' + FILE;
+  function filePath(file) {
+    return repoPath() + '/contents/' + file;
   }
 
   function checkRepo() {
@@ -163,43 +180,46 @@
     });
   }
 
-  /* 저장소의 books.json을 읽어 옵니다. 파일이 없으면 sha 없이 돌려줍니다. */
-  function getRemote() {
-    var url = filePath() + '?ref=' + encodeURIComponent(st.branch) + '&_=' + Date.now();
+  /* 저장소의 JSON 파일을 읽어 옵니다. 파일이 없으면 sha 없이 돌려줍니다. */
+  function getRemote(id) {
+    var c = coll(id);
+    var url = filePath(c.file) + '?ref=' + encodeURIComponent(st.branch) + '&_=' + Date.now();
     return request('GET', url).then(function (data) {
       var text = '';
       if (data && data.content) {
         try { text = C.base64ToUtf8(data.content); } catch (e) { text = ''; }
       }
-      var books = [];
+      var items = [];
       if (text) {
         try {
           var parsed = JSON.parse(text);
-          var list = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.books) ? parsed.books : []);
-          books = list.map(C.normalizeBook).filter(Boolean);
-        } catch (e) { books = []; }
+          items = C.normalizeList(C.listFromPayload(parsed, c), c);
+        } catch (e) { items = []; }
       }
-      return { books: books, sha: (data && data.sha) || null, text: text };
+      return { items: items, books: items, sha: (data && data.sha) || null, text: text };
     }, function (err) {
-      if (err.status === 404) return { books: [], sha: null, text: '', missing: true };
+      if (err.status === 404) return { items: [], books: [], sha: null, text: '', missing: true };
       throw err;
     });
   }
 
-  function putRemote(text, sha, message) {
+  function putRemote(id, text, sha, message) {
+    var c = coll(id);
     var body = {
       message: message,
       content: C.utf8ToBase64(text),
       branch: st.branch
     };
     if (sha) body.sha = sha;
-    return request('PUT', filePath(), body);
+    return request('PUT', filePath(c.file), body);
   }
 
-  function commitMessage(count, reason) {
-    if (reason === 'local') return '서재 업데이트 (' + count + '권)';
-    if (reason === 'connect') return '나만의 서재 동기화 시작 (' + count + '권)';
-    return '서재 동기화 (' + count + '권)';
+  function commitMessage(id, count, reason) {
+    var c = coll(id);
+    var what = c.label + ' 기록';
+    if (reason === 'connect') return '나만의 기록 동기화 시작 · ' + what + ' (' + count + c.unit + ')';
+    if (reason === 'local') return what + ' 업데이트 (' + count + c.unit + ')';
+    return what + ' 동기화 (' + count + c.unit + ')';
   }
 
   function uniqueIds(list) {
@@ -215,131 +235,123 @@
 
   /* ---------------- 본체 ---------------- */
 
-  function localSnapshot() {
-    var local = hooks && typeof hooks.getLocal === 'function' ? hooks.getLocal() : null;
-    return local || { books: [], deleted: [], seenRemote: [] };
+  function localSnapshot(id) {
+    var local = hooks && typeof hooks.getLocal === 'function' ? hooks.getLocal(id) : null;
+    return local || { items: [], books: [], deleted: [], seenRemote: [] };
   }
 
-  function applyLocal(books, deleted, opts) {
-    if (hooks && typeof hooks.applyLibrary === 'function') {
-      hooks.applyLibrary(books, Object.assign({ deleted: deleted || [] }, opts || {}));
+  function applyLocal(id, items, deleted, opts) {
+    if (hooks && typeof hooks.applyItems === 'function') {
+      hooks.applyItems(id, items, Object.assign({ deleted: deleted || [] }, opts || {}));
     }
   }
 
   /* 방금 저장한 내용을 화면에 반영합니다.
      저장하는 사이에 사용자가 또 고쳤으면 그 변경을 덮어쓰지 않고 남겨 둡니다. */
-  function applyAfterPush(saved, deleted) {
-    var local = localSnapshot();
-    var parked = C.mergeForSync(local.books, saved, local.deleted, []);
-    var same = C.booksFingerprint(parked.books) === C.booksFingerprint(saved);
-    applyLocal(parked.books, uniqueIds((deleted || []).concat(parked.removed || [])), { compact: same });
-    if (!same) schedulePush(1200);
-    return { same: same, books: parked.books };
+  function applyAfterPush(id, saved, deleted) {
+    var local = localSnapshot(id);
+    var parked = C.mergeForSync(local.items || local.books, saved, local.deleted, []);
+    var same = C.itemsFingerprint(parked.items, id) === C.itemsFingerprint(saved, id);
+    applyLocal(id, parked.items, uniqueIds((deleted || []).concat(parked.removed || [])), { compact: same });
+    if (!same) schedulePush(id, 1200);
+    return { same: same, items: parked.items };
   }
 
-  function succeed(count, pushed) {
+  function succeed(id, count, pushed) {
+    var fs = fileState(id);
     st.lastError = null;
-    st.firstSyncDone = true;
+    fs.firstSyncDone = true;
     st.lastSyncAt = new Date().toISOString();
+    st.counts[id] = count;
     writeCfg();
-    setPhase('synced', pushed ? (count + '권을 GitHub에 저장했어요.') : (count + '권이 최신 상태예요.'));
-    return { ok: true, pushed: !!pushed, count: count, books: count, sha: st.sha };
+    var c = coll(id);
+    var text = summaryText();
+    setPhase('synced', pushed
+      ? (c.label + ' ' + count + c.unit + '을 GitHub에 저장했어요.' + (text ? ' (' + text + ')' : ''))
+      : (text ? text + ' 모두 최신이에요.' : '최신 상태예요.'));
+    return { ok: true, pushed: !!pushed, count: count, items: count, books: count, collection: id, sha: fs.sha };
   }
 
   function failWith(err) {
     st.lastError = err;
-    var phase = 'error';
-    setPhase(phase, err && err.message ? err.message : '동기화하지 못했어요.');
+    setPhase('error', err && err.message ? err.message : '동기화하지 못했어요.');
   }
 
-  /* 원격 최신본을 받아 이 기기 서재와 합치고, 다르면 올립니다. */
-  function syncNow(reason) {
-    if (!st.token) {
-      setPhase('off', '');
-      return Promise.resolve({ ok: false, reason: 'no-token' });
-    }
-    if (st.syncing) return st.syncing;
-    setPhase('syncing', '최신 서재를 확인하고 있어요.');
-    st.syncing = runSync(reason || 'manual').then(function (r) {
-      st.syncing = null;
-      return r;
-    }, function (e) {
-      st.syncing = null;
-      failWith(e);
-      return { ok: false, error: e };
-    });
-    return st.syncing;
-  }
-
-  function runSync(reason) {
-    return getRemote().then(function (remote) {
+  /* 한 기록 종류: 원격 최신본을 받아 이 기기와 합치고, 다르면 올립니다. */
+  function runSyncFile(id, reason) {
+    var fs = fileState(id);
+    return getRemote(id).then(function (remote) {
       if (!remote.missing) return remote;
       /* 파일이 없는 것인지, 저장소에 못 들어가는 것인지 확인합니다. */
       return checkRepo().then(function () { return remote; });
     }).then(function (remote) {
-      st.sha = remote.sha || null;
-      st.remoteFingerprint = C.booksFingerprint(remote.books);
-      st.lastPullAt = Date.now();
+      fs.sha = remote.sha || null;
+      fs.fingerprint = C.itemsFingerprint(remote.items, id);
 
-      var local = localSnapshot();
-      var merged = C.mergeForSync(local.books, remote.books, local.deleted, local.seenRemote);
+      var local = localSnapshot(id);
+      var merged = C.mergeForSync(local.items || local.books, remote.items, local.deleted, local.seenRemote);
       var deleted = uniqueIds((local.deleted || []).concat(merged.removed || []));
 
       /* 먼저 화면에 반영하고(로컬 수정은 그대로 남겨 두고)… */
-      applyLocal(merged.books, deleted);
-      var fingerprint = C.booksFingerprint(merged.books);
+      applyLocal(id, merged.items, deleted);
+      st.lastPullAt = Date.now();
+      var fingerprint = C.itemsFingerprint(merged.items, id);
 
       /* …원격과 같으면 올리지 않습니다. */
-      if (st.sha && fingerprint === st.remoteFingerprint) {
-        applyAfterPush(merged.books, deleted);
-        return succeed(merged.books.length, false);
+      if (fs.sha && fingerprint === fs.fingerprint) {
+        applyAfterPush(id, merged.items, deleted);
+        return succeed(id, merged.items.length, false);
       }
-      return upload(merged.books, st.sha, 1, deleted, reason);
+      return upload(id, merged.items, fs.sha, 1, deleted, reason);
     });
   }
 
-  function upload(books, sha, retries, deleted, reason) {
-    var text = C.repoPayload(books);
-    return putRemote(text, sha, commitMessage(books.length, reason)).then(function (res) {
-      st.sha = (res && res.content && res.content.sha) || st.sha;
-      st.remoteFingerprint = C.booksFingerprint(books);
+  function upload(id, items, sha, retries, deleted, reason) {
+    var fs = fileState(id);
+    var text = C.payloadFor(coll(id), items);
+    return putRemote(id, text, sha, commitMessage(id, items.length, reason)).then(function (res) {
+      fs.sha = (res && res.content && res.content.sha) || fs.sha;
+      fs.fingerprint = C.itemsFingerprint(items, id);
       st.lastPullAt = Date.now();
-      var applied = applyAfterPush(books, deleted);
-      return succeed(applied.books.length, true);
+      var applied = applyAfterPush(id, items, deleted);
+      return succeed(id, applied.items.length, true);
     }, function (err) {
       /* 동시 편집 충돌: 최신 원격을 다시 받아 합친 뒤 한 번만 더 시도합니다. */
       if (err.status === 409 && retries > 0) {
-        return getRemote().then(function (remote) {
-          st.sha = remote.sha || null;
-          var local = localSnapshot();
-          var merged = C.mergeForSync(local.books, remote.books, local.deleted, local.seenRemote);
+        return getRemote(id).then(function (remote) {
+          fs.sha = remote.sha || null;
+          var local = localSnapshot(id);
+          var merged = C.mergeForSync(local.items || local.books, remote.items, local.deleted, local.seenRemote);
           var nextDeleted = uniqueIds((local.deleted || []).concat(merged.removed || []));
-          applyLocal(merged.books, nextDeleted);
-          return upload(merged.books, st.sha, retries - 1, nextDeleted, reason);
+          applyLocal(id, merged.items, nextDeleted);
+          return upload(id, merged.items, fs.sha, retries - 1, nextDeleted, reason);
         });
       }
       /* sha 없이 덮어쓰려다 거절된 경우(파일이 이미 있음): 최신본을 받아 다시 합칩니다. */
       if (err.status === 422 && retries > 0) {
-        return syncNow('retry');
+        return runSyncFile(id, 'retry');
       }
       throw err;
     });
   }
 
   /* 이 기기의 변경만 올립니다(대개 요청 한 번). */
-  function pushLocal() {
+  function pushFile(id) {
+    var fs = fileState(id);
     if (!st.token) return Promise.resolve({ ok: false, reason: 'no-token' });
     if (st.syncing) {
-      schedulePush(1500);
+      schedulePush(id, 1500);
       return Promise.resolve({ ok: false, reason: 'busy' });
     }
-    var local = localSnapshot();
-    var fingerprint = C.booksFingerprint(local.books);
-    if (st.sha && fingerprint === st.remoteFingerprint) {
-      return Promise.resolve({ ok: true, pushed: false, count: local.books.length });
+    var local = localSnapshot(id);
+    var items = local.items || local.books;
+    var fingerprint = C.itemsFingerprint(items, id);
+    if (fs.sha && fingerprint === fs.fingerprint) {
+      st.counts[id] = items.length;
+      return Promise.resolve({ ok: true, pushed: false, count: items.length, collection: id });
     }
-    setPhase('syncing', '이 기기의 변경을 저장하고 있어요.');
-    st.syncing = upload(local.books, st.sha, 1, local.deleted, 'local').then(function (r) {
+    setPhase('syncing', coll(id).label + ' 기록을 저장하고 있어요.');
+    st.syncing = upload(id, items, fs.sha, 1, local.deleted, 'local').then(function (r) {
       st.syncing = null;
       return r;
     }, function (e) {
@@ -350,22 +362,64 @@
     return st.syncing;
   }
 
-  function schedulePush(delay) {
-    clearTimeout(st.pushTimer);
-    st.pushTimer = setTimeout(function () {
-      st.pushTimer = null;
-      if (!st.firstSyncDone) { syncNow('local-first'); return; }
-      pushLocal();
+  /* 세 파일을 차례로 맞춥니다(요청이 몰리지 않게 순서대로). */
+  function syncAll(reason) {
+    if (!st.token) {
+      setPhase('off', '');
+      return Promise.resolve({ ok: false, reason: 'no-token' });
+    }
+    if (st.syncing) return st.syncing;
+    setPhase('syncing', '최신 기록을 확인하고 있어요.');
+    var pushed = 0;
+    var chain = Promise.resolve();
+    C.COLLECTIONS.forEach(function (c) {
+      chain = chain.then(function () {
+        return runSyncFile(c.id, reason || 'manual');
+      }).then(function (r) {
+        if (r && r.pushed) pushed++;
+        return r;
+      });
+    });
+    st.syncing = chain.then(function () {
+      st.syncing = null;
+      var text = summaryText();
+      if (st.phase !== 'error') {
+        setPhase('synced', text
+          ? (text + (pushed ? ' — GitHub에 저장했어요.' : ' · 모두 최신이에요.'))
+          : '동기화됐어요.');
+      }
+      return { ok: st.phase !== 'error', pushed: pushed > 0, counts: Object.assign({}, st.counts) };
+    }, function (e) {
+      st.syncing = null;
+      failWith(e);
+      return { ok: false, error: e };
+    });
+    return st.syncing;
+  }
+
+  function schedulePush(id, delay) {
+    if (!id) { C.COLLECTIONS.forEach(function (c) { schedulePush(c.id, delay); }); return; }
+    clearTimeout(st.pushTimers[id]);
+    st.pushTimers[id] = setTimeout(function () {
+      st.pushTimers[id] = null;
+      if (!fileState(id).firstSyncDone) { syncAll('local-first'); return; }
+      pushFile(id);
     }, delay || PUSH_DELAY);
   }
 
-  /* 서재가 바뀔 때마다 app.js가 부릅니다. */
-  function notifyLocalChange() {
+  /* 기록이 바뀔 때마다 app.js가 부릅니다. 바뀐 기록 종류만 올립니다. */
+  function notifyLocalChange(id) {
     if (!st.token) {
       if (st.phase !== 'off') setPhase('off', '');
       return;
     }
-    schedulePush();
+    if (id) {
+      /* 처음 연결하기 전에는 어느 파일이 최신인지 모르므로 전체를 한 번 맞춥니다. */
+      if (!fileState(id).firstSyncDone) { schedulePush(id); return; }
+      schedulePush(id);
+      return;
+    }
+    schedulePush(null);
   }
 
   /* ---------------- 연결 / 해제 ---------------- */
@@ -378,7 +432,12 @@
     st.repo = repo;
     if (!st.token) return Promise.resolve({ ok: false, message: '토큰을 먼저 넣어 주세요.' });
 
-    st.firstSyncDone = false;
+    C.COLLECTIONS.forEach(function (c) {
+      var fs = fileState(c.id);
+      fs.firstSyncDone = false;
+      fs.sha = null;
+      fs.fingerprint = '';
+    });
     writeCfg();
     setPhase('syncing', '연결을 확인하고 있어요.');
     return checkRepo().then(function (info) {
@@ -387,14 +446,14 @@
         err.status = 403;
         throw err;
       }
-      return syncNow('connect');
+      return syncAll('connect');
     }).then(function (r) {
       if (!r || !r.ok) {
         return { ok: false, message: (r && r.error && r.error.message) || st.message || '동기화하지 못했어요.' };
       }
       bindWindowEvents();
       startPolling();
-      return { ok: true, pushed: !!r.pushed, count: r.books, repo: st.repo };
+      return { ok: true, pushed: !!r.pushed, counts: r.counts, repo: st.repo };
     }, function (err) {
       failWith(err);
       return { ok: false, message: err && err.message ? err.message : '동기화하지 못했어요.' };
@@ -403,12 +462,15 @@
 
   function disconnect() {
     st.token = '';
-    st.sha = null;
-    st.remoteFingerprint = '';
-    st.firstSyncDone = false;
     st.lastError = null;
-    clearTimeout(st.pushTimer);
-    st.pushTimer = null;
+    C.COLLECTIONS.forEach(function (c) {
+      var fs = fileState(c.id);
+      fs.sha = null;
+      fs.fingerprint = '';
+      fs.firstSyncDone = false;
+      clearTimeout(st.pushTimers[c.id]);
+      st.pushTimers[c.id] = null;
+    });
     stopPolling();
     writeCfg();
     setPhase('off', '');
@@ -422,7 +484,7 @@
     st.pollTimer = setInterval(function () {
       if (root.document && root.document.hidden) return;
       if (st.syncing) return;
-      syncNow('poll');
+      syncAll('poll');
     }, POLL_MS);
   }
 
@@ -440,11 +502,11 @@
         if (doc.hidden || !st.token) return;
         /* 방금 맞춘 상태면 건너뜁니다. */
         if (Date.now() - st.lastPullAt < 5000) return;
-        syncNow('visible');
+        syncAll('visible');
       });
     }
     root.addEventListener('online', function () {
-      if (st.token) syncNow('online');
+      if (st.token) syncAll('online');
     });
   }
 
@@ -455,7 +517,7 @@
       return;
     }
     bindWindowEvents();
-    syncNow('start');
+    syncAll('start');
     startPolling();
   }
 
@@ -467,11 +529,12 @@
     hasToken: function () { return !!st.token; },
     init: function (h) { hooks = h || null; readCfg(); emit(); },
     start: start,
-    syncNow: syncNow,
+    syncNow: syncAll,
     connect: connect,
     disconnect: disconnect,
     notifyLocalChange: notifyLocalChange,
     schedulePush: schedulePush,
+    push: pushFile,
     stopPolling: stopPolling
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

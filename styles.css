@@ -4,6 +4,7 @@
    ============================================================ */
 
 :root {
+  color-scheme: light;
   --bg: #fbf8f6;
   --surface: #fffdfb;
   --ink: #3b3532;          /* 따뜻한 다크 모카 */
@@ -161,6 +162,7 @@ h1 {
   background: #e8e8ec;
   border-radius: 16px;
 }
+.tabs.tabs-3 { grid-template-columns: repeat(3, 1fr); gap: 3px; }
 .tab {
   height: 42px;
   border: 0;
@@ -1500,3 +1502,213 @@ h1 { color: #3b3532; letter-spacing: -.8px; }
 .sync-actions .btn-soft { flex: none; width: 104px; font-size: 14px; }
 .sync-actions .btn-soft[hidden] { display: none; }
 .sync-actions .btn-primary.wide { flex: 1; min-width: 0; padding: 0 14px; font-size: 15px; }
+
+/* ============================================================
+   세 가지 기록 (독서 / 영상 / 웹툰·웹소설) — 귀여운 파스텔 다듬기
+   전체는 한 팔레트(크림 배경 + 파스텔) 안에서, 탭마다 포인트 색만 살짝 달라집니다.
+   ============================================================ */
+
+.app {
+  --accent: #a8826c;          /* 독서 — 크림/베이지 */
+  --accent-ink: #7c5a49;
+  --accent-soft: #fbe7e3;
+  --tray: #f3e9e2;
+  --sticker: #fbe7e3;
+}
+.app[data-collection="videos"] {
+  --accent: #7d6a9e;          /* 영상 — 라벤더/블루 */
+  --accent-ink: #5f5182;
+  --accent-soft: #ece7f7;
+  --tray: #eae5f6;
+  --sticker: #e5e9fa;
+}
+.app[data-collection="webtoons"] {
+  --accent: #b2707a;          /* 웹툰·웹소설 — 피치/핑크 */
+  --accent-ink: #8f525c;
+  --accent-soft: #fde4e2;
+  --tray: #fbe6e3;
+  --sticker: #fde0dd;
+}
+
+/* 제목 */
+h1 { font-size: 25px; }
+.h1-emoji {
+  display: inline-block;
+  font-size: .84em;
+  transform: translateY(1px) rotate(-6deg);
+}
+
+/* 상단 작은 도구 줄 (통계 · 동기화) */
+.header-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+.tool-pill,
+.sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  margin: 0;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: #8a7d75;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -.1px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(120, 96, 84, .05);
+  transition: transform .12s ease, background .2s ease, color .2s ease;
+}
+.tool-pill { color: var(--accent-ink); background: var(--accent-soft); border-color: transparent; }
+.tool-pill[aria-pressed="true"] { background: var(--mocha); color: #fff; }
+.tool-pill:active, .sync-pill:active { transform: scale(.97); }
+.sync-pill { margin-left: auto; }
+
+/* 3분할 탭 — 둥근 알약, 고른 탭만 파스텔 배경 */
+.tabs.tabs-3 { background: var(--tray); border-radius: 20px; transition: background .25s ease; }
+.tabs-3 .tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 44px;
+  padding: 0 4px;
+  border-radius: 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -.4px;
+  color: #9c8d84;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tabs-3 .tab-emoji { font-size: 14px; line-height: 1; transform: translateY(-.5px); }
+.tabs-3 .tab.is-active {
+  background: var(--surface);
+  color: var(--accent-ink);
+  box-shadow: 0 2px 8px rgba(120, 96, 84, .14), inset 0 0 0 1px rgba(255, 255, 255, .7);
+}
+.tabs-3 .tab.is-active .tab-text { font-weight: 800; }
+
+/* 카테고리 칩 — 고른 칩은 그 탭의 포인트 색 */
+.app[data-collection="videos"] .chip.is-active { background: #6f5f93; border-color: #6f5f93; }
+.app[data-collection="webtoons"] .chip.is-active { background: #a8626c; border-color: #a8626c; }
+.chip.sm.is-active { color: #fff; }
+
+/* 표지 위 작은 마스킹 테이프 — 스티커 느낌 */
+.cover::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 8;
+  width: 34%;
+  max-width: 44px;
+  height: 9px;
+  transform: translateX(-50%) rotate(-2.5deg);
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .88), rgba(255, 253, 250, .42));
+  box-shadow: 0 1px 3px rgba(120, 96, 84, .2);
+  pointer-events: none;
+  opacity: .92;
+}
+.detail-cover::after { width: 46%; max-width: 88px; height: 13px; }
+
+/* 카드 — 둥근 모서리, 부드러운 그림자, 누르면 살짝 들어가요 */
+.grid .card { transition: transform .16s ease; }
+.grid .card:active { transform: scale(.975); }
+.grid .card .cover { border-radius: 6px 14px 14px 6px; }
+.grid .card .heart svg { width: 23px; height: 23px; }
+
+/* 상세 표지는 살짝 기울여 스크랩북 느낌 (읽기는 그대로) */
+.detail-cover { transform: rotate(-1.3deg); }
+
+/* 표지가 없을 때 — 이모지 한 개 */
+.cover-fallback .fb-emoji {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 19px;
+  line-height: 1;
+  opacity: .82;
+}
+.detail-cover .fb-emoji { font-size: 26px; margin-bottom: 10px; }
+
+/* 빈 화면 — 귀여운 한 줄 + 이모지 */
+.empty { padding: 48px 24px 40px; }
+.empty-emoji {
+  display: inline-block;
+  margin-bottom: 14px;
+  font-size: 44px;
+  animation: empty-float 3.4s ease-in-out infinite;
+}
+@keyframes empty-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-6px) rotate(3deg); }
+}
+.empty p {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #8f8078;
+  word-break: keep-all;
+}
+.empty .btn-soft { background: var(--accent-soft); color: var(--accent-ink); }
+
+/* 상세 — 분류 칩 색과 링크 버튼 */
+.chip-static.kind.tint-cream { background: #f9efe6; color: #8a6144; }
+.chip-static.kind.tint-lavender { background: var(--lavender); color: #63557f; }
+.chip-static.kind.tint-peach { background: #fdE6e2; color: #9a5a61; }
+.detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.detail-link:active { transform: scale(.98); }
+
+/* 폼 상태 칩 — 상태별 파스텔 */
+.status-chip.done:not(.is-active) { background: var(--sage); border-color: #dfe9d9; color: #5a6b52; }
+.status-chip.stopped:not(.is-active) { background: var(--rose); border-color: #f6d8d2; color: #8d564f; }
+.status-chip.active:not(.is-active) { background: var(--lavender); border-color: #e1d9f2; color: #63557f; }
+.status-chip.is-active { background: var(--mocha); border-color: var(--mocha); color: #fff; }
+.status-chips .chip[data-status="완독"]:not(.is-active),
+.status-chips .chip[data-status="중단"]:not(.is-active),
+.status-chips .chip[data-status="읽는 중"]:not(.is-active) { background: var(--surface); border-color: var(--line); color: #6f625a; }
+
+/* 통계 머리말 */
+.stats-head {
+  margin: 2px 16px 12px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+  color: var(--accent-ink);
+}
+
+/* 표지 배지 · 하트는 조금 더 또렷하게 */
+.cover-badge { font-size: 10px; padding: 2px 8px; }
+.cover .heart.on svg { fill: #e2695f; }
+
+@media (max-width: 360px) {
+  .tabs-3 .tab { font-size: 12.5px; gap: 3px; }
+  .tabs-3 .tab-emoji { font-size: 13px; }
+  h1 { font-size: 23px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .empty-emoji { animation: none; }
+}
+
+/* 통계 화면에서는 검색줄을 감춥니다 ([hidden]이 display:flex에 밀리지 않게) */
+.search[hidden] { display: none; }
