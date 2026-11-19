@@ -1,7 +1,7 @@
 {
   "app": "나만의 기록",
   "version": 3,
-  "updatedAt": "2026-11-19T00:26:18.851Z",
+  "updatedAt": "2026-11-19T00:27:09.819Z",
   "count": 19,
   "books": [
     {
@@ -16,8 +16,15 @@
       "cover": "https://books.google.com/books/content?id=WRwLEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
       "rating": 0,
-      "quotes": [],
-      "updatedAt": "2026-11-19T00:26:17.948Z",
+      "quotes": [
+        {
+          "id": "7397b563-a661-419e-b1d2-6c6f26808db8",
+          "text": "'행복이 목적 이라는 아리스토텔레스는 틀렸고, '모든 것은 생존과 번식 의 수단'이라는 다윈이 옳았다고. 우리는 행복하기 위해 사 는 게 아니고 생존하기 위해 행복한 거라고.",
+          "createdAt": "2026-11-19T00:27:08.916Z",
+          "page": "6"
+        }
+      ],
+      "updatedAt": "2026-11-19T00:27:08.916Z",
       "createdAt": "2026-11-19T00:26:17.948Z"
     },
     {
