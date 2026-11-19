@@ -1,24 +1,24 @@
 {
   "app": "나만의 기록",
   "version": 3,
-  "updatedAt": "2026-11-17T08:40:00Z",
-  "count": 19,
+  "updatedAt": "2026-11-19T00:24:35.639Z",
+  "count": 18,
   "books": [
     {
-      "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
-      "title": "혼모노",
-      "author": "성해나",
-      "category": "오디오북",
-      "startDate": "2026-01-26",
-      "endDate": "2026-02-02",
-      "finishedAt": "2026-02-02",
-      "status": "완독",
-      "cover": "https://books.google.com/books/content?id=mZNTEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "id": "e4744cc2-65e5-450c-a6a8-c4d2727e53e6",
+      "title": "눈물을 마시는 새 3",
+      "author": "이영도",
+      "category": "소설",
+      "startDate": "2026-08-01",
+      "endDate": "",
+      "finishedAt": "",
+      "status": "읽는 중",
+      "cover": "https://books.google.com/books/content?id=Wq9PcjjX6_sC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
       "rating": 0,
       "quotes": [],
-      "updatedAt": "2026-11-16T12:46:51.282Z",
-      "createdAt": "2026-11-16T12:46:51.282Z"
+      "updatedAt": "2026-11-16T12:52:46.513Z",
+      "createdAt": "2026-11-16T12:52:46.513Z"
     },
     {
       "id": "21b838c4-c4ca-4016-a23e-663f7b88901c",
@@ -63,22 +63,6 @@
       "rating": 3,
       "quotes": [],
       "createdAt": "2026-11-15T06:37:19.549Z"
-    },
-    {
-      "id": "43de058f-f69b-4179-958b-ba4b64b63ba0",
-      "title": "13계단",
-      "author": "다카노 가즈아키",
-      "category": "소설",
-      "startDate": "2026-11-12",
-      "endDate": "",
-      "finishedAt": "",
-      "status": "읽는 중",
-      "cover": "https://books.google.com/books/content?id=SiIstsuAOsIC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
-      "memo": "",
-      "rating": 0,
-      "quotes": [],
-      "updatedAt": "2026-11-16T01:22:27.903Z",
-      "createdAt": "2026-11-16T01:22:27.903Z"
     },
     {
       "id": "a8ee489a-e713-49f5-abc2-9021d7b9eb5a",
@@ -159,22 +143,6 @@
       "quotes": [],
       "updatedAt": "2026-11-16T12:54:26.012Z",
       "createdAt": "2026-11-16T12:54:26.012Z"
-    },
-    {
-      "id": "e4744cc2-65e5-450c-a6a8-c4d2727e53e6",
-      "title": "눈물을 마시는 새 3",
-      "author": "이영도",
-      "category": "소설",
-      "startDate": "2026-08-01",
-      "endDate": "",
-      "finishedAt": "",
-      "status": "읽는 중",
-      "cover": "https://books.google.com/books/content?id=Wq9PcjjX6_sC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
-      "memo": "",
-      "rating": 0,
-      "quotes": [],
-      "updatedAt": "2026-11-16T12:52:46.513Z",
-      "createdAt": "2026-11-16T12:52:46.513Z"
     },
     {
       "id": "650da914-c797-4cad-b76d-08d0d9b8c2a6",
@@ -287,6 +255,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T12:47:30.422Z",
       "createdAt": "2026-11-16T12:47:30.422Z"
+    },
+    {
+      "id": "5755c9ec-5555-4540-b00c-39125fe69d7a",
+      "title": "혼모노",
+      "author": "성해나",
+      "category": "오디오북",
+      "startDate": "2026-01-26",
+      "endDate": "2026-02-02",
+      "finishedAt": "2026-02-02",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=mZNTEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "rating": 0,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:46:51.282Z",
+      "createdAt": "2026-11-16T12:46:51.282Z"
     },
     {
       "id": "64d58bb9-fa49-49ef-9d94-67166e4fd3ef",
