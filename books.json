@@ -1,9 +1,25 @@
 {
   "app": "나만의 기록",
   "version": 3,
-  "updatedAt": "2026-11-19T00:24:35.639Z",
-  "count": 18,
+  "updatedAt": "2026-11-19T00:26:18.851Z",
+  "count": 19,
   "books": [
+    {
+      "id": "b815b9d4-18dc-4544-a2d8-ae56d89e21da",
+      "title": "행복의 기원(10주년 기념 개정판)",
+      "author": "서은국",
+      "category": "인문",
+      "startDate": "2026-11-19",
+      "endDate": "",
+      "finishedAt": "",
+      "status": "읽는 중",
+      "cover": "https://books.google.com/books/content?id=WRwLEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "rating": 0,
+      "quotes": [],
+      "updatedAt": "2026-11-19T00:26:17.948Z",
+      "createdAt": "2026-11-19T00:26:17.948Z"
+    },
     {
       "id": "e4744cc2-65e5-450c-a6a8-c4d2727e53e6",
       "title": "눈물을 마시는 새 3",
