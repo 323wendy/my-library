@@ -1,8 +1,8 @@
 {
   "app": "나만의 기록",
   "version": 1,
-  "updatedAt": "2026-11-21T10:48:15.926Z",
-  "count": 2,
+  "updatedAt": "2026-11-21T12:40:09.378Z",
+  "count": 3,
   "items": [
     {
       "id": "1a5d112e-10df-4108-889a-00ad87eeac80",
@@ -35,6 +35,22 @@
       "link": "",
       "updatedAt": "2026-11-17T06:56:38.596Z",
       "createdAt": "2026-11-17T06:56:38.596Z"
+    },
+    {
+      "id": "92c3246f-6f34-450b-b60a-524bef612835",
+      "title": "더 커뮤니티2: 보이지 않는 손",
+      "creator": "권성민, 이지훈, 김정훈",
+      "kind": "예능",
+      "startDate": "",
+      "endDate": "",
+      "status": "봤음",
+      "cover": "https://search.pstatic.net/common?type=f208_312&src=https%3A%2F%2Fcsearch-phinf.pstatic.net%2F20261001_84%2F1790852554098oSMf4_JPEG%2F24956cd2289922387b935893924b98d4.jpg",
+      "note": "서바이벌 중 최고",
+      "rating": 3,
+      "quotes": [],
+      "link": "",
+      "updatedAt": "2026-11-21T12:40:08.475Z",
+      "createdAt": "2026-11-21T12:40:08.474Z"
     }
   ]
 }
