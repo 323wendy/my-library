@@ -173,6 +173,21 @@
     } catch (e) { /* noop */ }
   }
 
+  /* 동기화(토큰) 없이 이 기기에만 저장한 변경이 있는지 표시해 둡니다.
+     나중에 동기화를 연결하면 그 변경을 저장소 쪽 보관함과 합칩니다. */
+  var PENDING_KEY = 'reading-app:secret:pending';
+
+  function setPending(on) {
+    try {
+      if (on) root.localStorage.setItem(PENDING_KEY, '1');
+      else root.localStorage.removeItem(PENDING_KEY);
+    } catch (e) { /* noop */ }
+  }
+
+  function isPending() {
+    try { return root.localStorage.getItem(PENDING_KEY) === '1'; } catch (e) { return false; }
+  }
+
   function readCache() {
     try {
       var d = JSON.parse(root.localStorage.getItem(BLOB_KEY) || 'null');
@@ -236,6 +251,21 @@
       if (err.status === 404) return { blob: null, sha: null, missing: true };
       throw err;
     });
+  }
+
+  /* 동기화를 아직 연결하지 않은 기기에서도, 공개된 암호문(서비스 화면의 같은 파일)을
+     받아 비밀번호를 확인할 수 있게 합니다. (읽기는 공개, 쓰기는 토큰이 있을 때만) */
+  function getSiteBlob() {
+    if (!root.location || !/^https?:$/.test(root.location.protocol)) return Promise.resolve(null);
+    return fetch(FILE + '?t=' + Date.now(), { cache: 'no-store' }).then(function (res) {
+      if (!res || !res.ok) return null;
+      return res.text().then(function (text) {
+        try {
+          var blob = JSON.parse(text);
+          return (blob && blob.salt && blob.iv && blob.data) ? blob : null;
+        } catch (e) { return null; }
+      });
+    }, function () { return null; });
   }
 
   function putRemote(text, sha) {
@@ -305,7 +335,9 @@
     var cached = readCache();
     var remoteP = st.token
       ? getRemote().then(function (r) { return r; }, function () { return null; })
-      : Promise.resolve(null);
+      : getSiteBlob().then(function (blob) {
+        return blob ? { blob: blob, sha: null, site: true } : null;
+      }, function () { return null; });
 
     return remoteP.then(function (remote) {
       var remoteBlob = remote && remote.blob ? remote.blob : null;
@@ -314,8 +346,22 @@
       if (remoteBlob) {
         return openBlob(remoteBlob, pin).then(function (items) {
           st.sha = remoteSha;
-          st.items = items;
-          return ready(items);
+          return mergePendingItems(items).then(function (merged) {
+            st.items = merged.items;
+            st.dirty = merged.changed;
+            return ready(st.items);
+          });
+        }, function (err) {
+          /* 이 기기에서만 비밀번호를 바꿔 둔 경우 등: 이 기기 암호문으로 한 번 더 열어 봅니다. */
+          if (cached && cached.blob && cached.blob.salt !== remoteBlob.salt) {
+            return openBlob(cached.blob, pin).then(function (items) {
+              st.sha = remoteSha;
+              st.items = items;
+              st.dirty = true;
+              return ready(items);
+            });
+          }
+          throw err;
         });
       }
 
@@ -361,6 +407,20 @@
     return { ok: true, items: items };
   }
 
+  /* 동기화 없이 이 기기에만 저장해 둔 작품이 있으면 저장소 쪽 목록과 합칩니다(같은 id는 최신 우선). */
+  function mergePendingItems(remoteItems) {
+    if (!isPending() || !st.key) return Promise.resolve({ items: remoteItems, changed: false });
+    var cached = readCache();
+    if (!cached || !cached.blob || cached.blob.salt !== st.salt) return Promise.resolve({ items: remoteItems, changed: false });
+    return decryptPayload(cached.blob, st.key).then(function (payload) {
+      var localItems = itemsOfPayload(payload);
+      var merged = mergeById(localItems, remoteItems);
+      var coll = C.collection('secret');
+      var changed = C.itemsFingerprint(merged, coll) !== C.itemsFingerprint(remoteItems, coll);
+      return { items: C.sortItems(merged, coll), changed: changed };
+    }, function () { return { items: remoteItems, changed: false }; });
+  }
+
   function clearSecret() {
     st.unlocked = false;
     st.key = null;
@@ -384,8 +444,8 @@
       job = encryptPayload(key, salt, payloadOf(items)).then(function (blob) {
         var text = JSON.stringify(blob, null, 2) + '\n';
         writeCache(blob, text);
-        if (!st.token) return null;
-        return putRemote(text, sha).catch(function () { return null; });
+        if (!st.token) { setPending(true); return null; }
+        return putRemote(text, sha).then(function () { setPending(false); }).catch(function () { return null; });
       }).catch(function () { return null; });
     }
     clearSecret();
@@ -420,12 +480,14 @@
       st.blob = blob;
       if (!st.token) {
         st.lastSavedAt = new Date().toISOString();
+        setPending(true);
         setPhase('local', '');
         return { ok: true, local: true };
       }
       return putRemote(text, st.sha).then(function (res) {
         st.sha = (res && res.content && res.content.sha) || st.sha;
         st.lastSavedAt = new Date().toISOString();
+        setPending(false);
         setPhase('saved', '');
         return { ok: true, sha: st.sha };
       }, function (err) {
@@ -468,6 +530,7 @@
     return putRemote(text, st.sha).then(function (res) {
       st.sha = (res && res.content && res.content.sha) || st.sha;
       st.lastSavedAt = new Date().toISOString();
+      setPending(false);
       setPhase('saved', '');
       return { ok: true, sha: st.sha };
     }, function (err) {
@@ -541,6 +604,7 @@
         st.key = newKey; st.salt = salt; st.blob = blob;
         st.lastSavedAt = new Date().toISOString();
         writeCache(blob, text);
+        setPending(true);
         setPhase('local', '');
         return { ok: true, local: true };
       }
@@ -549,6 +613,7 @@
         st.sha = (res && res.content && res.content.sha) || st.sha;
         st.lastSavedAt = new Date().toISOString();
         writeCache(blob, text);
+        setPending(false);
         setPhase('saved', '');
         return { ok: true };
       });
