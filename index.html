@@ -35,6 +35,27 @@
       <button type="button" class="btn-primary" id="btn-add">+ 등록</button>
     </div>
 
+    <!-- 웹툰·웹소설 탭에서만 보이는 작은 장식 (비밀 보관함으로 들어가는 입구) -->
+    <button type="button" class="secret-clover" id="secret-clover" aria-label="네잎클로버 장식">
+      <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+        <g class="cl-out">
+          <ellipse cx="14.6" cy="13.6" rx="7.1" ry="6.2" transform="rotate(-32 14.6 13.6)"/>
+          <ellipse cx="25.4" cy="13.6" rx="7.1" ry="6.2" transform="rotate(32 25.4 13.6)"/>
+          <ellipse cx="14.6" cy="23.2" rx="7.1" ry="6.2" transform="rotate(32 14.6 23.2)"/>
+          <ellipse cx="25.4" cy="23.2" rx="7.1" ry="6.2" transform="rotate(-32 25.4 23.2)"/>
+          <path d="M20.3 26.2c.5 2.6.7 4.4.5 6.1"/>
+        </g>
+        <g class="cl-in">
+          <ellipse cx="14.6" cy="13.6" rx="7.1" ry="6.2" transform="rotate(-32 14.6 13.6)"/>
+          <ellipse cx="25.4" cy="13.6" rx="7.1" ry="6.2" transform="rotate(32 25.4 13.6)"/>
+          <ellipse cx="14.6" cy="23.2" rx="7.1" ry="6.2" transform="rotate(32 14.6 23.2)"/>
+          <ellipse cx="25.4" cy="23.2" rx="7.1" ry="6.2" transform="rotate(-32 25.4 23.2)"/>
+          <path d="M20.3 26.2c.5 2.6.7 4.4.5 6.1"/>
+        </g>
+        <path class="cl-vein" d="M20 19.3c-1.7-.5-2.8-1.5-3.4-2.9M20 19.3c1.7-.5 2.8-1.5 3.4-2.9M20 20.7c-1.5.8-2.3 1.8-2.7 3.1M20 20.7c1.5.8 2.3 1.8 2.7 3.1"/>
+      </svg>
+    </button>
+
     <div class="header-tools">
       <button type="button" class="tool-pill" id="btn-view" aria-pressed="false">📊 통계</button>
       <button type="button" class="sync-pill" id="btn-sync" data-state="off" aria-label="동기화 설정 열기">
@@ -53,6 +74,15 @@
         <span class="tab-emoji" aria-hidden="true">🖍️</span><span class="tab-text">웹툰·웹소설</span>
       </button>
     </nav>
+
+    <div class="secret-bar" id="secret-bar" hidden>
+      <span class="secret-bar-title" id="secret-bar-title">
+        <span class="secret-bar-emoji" aria-hidden="true">🔐</span> 비밀 보관함
+      </span>
+      <span class="secret-bar-state" id="secret-state" aria-live="polite"></span>
+      <button type="button" class="secret-bar-btn" id="secret-settings" aria-label="보관함 설정">⚙️</button>
+      <button type="button" class="secret-bar-btn lock" id="secret-lock">잠그기</button>
+    </div>
 
     <div class="search" id="search-box">
       <span class="search-icon" aria-hidden="true">🔍</span>
@@ -218,7 +248,8 @@
 
       <div class="field">
         <label for="f-memo" id="f-memo-label">한 줄 평</label>
-        <textarea class="input" id="f-memo" name="memo" rows="2" placeholder="짧은 감상을 남겨보세요."></textarea>
+        <textarea class="input" id="f-memo" name="memo" rows="3" placeholder="짧은 감상을 남겨보세요."></textarea>
+        <button type="button" class="btn-summary" id="f-summary" hidden>📖 줄거리 넣기</button>
       </div>
 
       <div class="field">
@@ -341,8 +372,51 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- 비밀 보관함 비밀번호 -->
+<div class="modal center" id="pin-modal" hidden>
+  <div class="dialog pin-dialog" role="dialog" aria-modal="true" aria-labelledby="pin-title">
+    <div class="pin-head">
+      <h2 id="pin-title">🔐 비밀 보관함</h2>
+      <button type="button" class="icon-btn" id="pin-close" aria-label="닫기">×</button>
+    </div>
+    <p class="pin-lead" id="pin-lead">숫자 4자리 비밀번호를 넣어 주세요.</p>
+    <div class="pin-dots" id="pin-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <p class="pin-error" id="pin-error" role="status" aria-live="polite" hidden></p>
+    <div class="pin-pad" id="pin-pad">
+      <button type="button" class="pin-key" data-key="1">1</button>
+      <button type="button" class="pin-key" data-key="2">2</button>
+      <button type="button" class="pin-key" data-key="3">3</button>
+      <button type="button" class="pin-key" data-key="4">4</button>
+      <button type="button" class="pin-key" data-key="5">5</button>
+      <button type="button" class="pin-key" data-key="6">6</button>
+      <button type="button" class="pin-key" data-key="7">7</button>
+      <button type="button" class="pin-key" data-key="8">8</button>
+      <button type="button" class="pin-key" data-key="9">9</button>
+      <span class="pin-key blank" aria-hidden="true"></span>
+      <button type="button" class="pin-key" data-key="0">0</button>
+      <button type="button" class="pin-key del" data-key="del" aria-label="한 자리 지우기">⌫</button>
+    </div>
+    <p class="pin-foot" id="pin-foot">보관함 내용은 비밀번호로 암호화되어 저장돼요.</p>
+  </div>
+</div>
+
+<!-- 비밀 보관함 설정 -->
+<div class="modal center" id="secret-settings-modal" hidden>
+  <div class="dialog secret-settings" role="dialog" aria-modal="true" aria-labelledby="secret-settings-title">
+    <h2 id="secret-settings-title">🔐 보관함 설정</h2>
+    <p class="secret-settings-note">보관함 내용은 숫자 4자리 비밀번호로 암호화해서 <b>secret-webtoons.json</b>에 저장돼요. 저장소가 공개여도 제목·감상·문구는 알아볼 수 없어요.</p>
+    <p class="secret-settings-status" id="secret-settings-status"></p>
+    <div class="secret-settings-actions">
+      <button type="button" class="btn-soft" id="secret-change-pin">비밀번호 바꾸기</button>
+      <button type="button" class="btn-soft" id="secret-save-now">지금 저장</button>
+    </div>
+    <button type="button" class="btn-primary wide" id="secret-settings-close">닫기</button>
+  </div>
+</div>
+
 <script src="core.js"></script>
 <script src="sync.js"></script>
+<script src="secret.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

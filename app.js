@@ -31,7 +31,9 @@
     lookup: { busy: false, items: [], message: '', tone: '' },
     quoteDraft: '',
     quotePage: '',
-    quoteEditingId: null
+    quoteEditingId: null,
+    lookupDesc: '',
+    lookupQuery: ''
   };
 
   var el = {};
@@ -40,11 +42,13 @@
   var toastTimer = null;
   var lookupTimer = null;
   /* 자동 검색이 채워 둔 값 — 다른 후보를 고르면 앞 후보의 값이 남지 않도록 기억합니다. */
-  var lastAuto = { creator: '', platform: '', link: '' };
+  var lastAuto = { creator: '', platform: '', link: '', memo: '' };
   var swReloading = false;
   var syncApplying = false;
 
   /* ---------------- 기록 종류 도우미 ---------------- */
+
+  var lockingSecret = false;
 
   function coll(id) { return C.collection(id || state.current); }
   function current() { return coll(state.current); }
@@ -76,6 +80,8 @@
     var legacy = raw && (raw.edits || raw.added || raw.deleted) ? raw : null;
     var out = {};
     COLLECTIONS.forEach(function (c) {
+      /* 비밀 보관함은 이 브라우저 저장소에 평문으로 남기지 않습니다(열었을 때만 메모리에). */
+      if (c.secret) { out[c.id] = emptyStore(); return; }
       var s = raw && raw[c.id] ? raw[c.id] : (c.id === 'books' ? legacy : null);
       out[c.id] = normalizeStore(s);
     });
@@ -84,7 +90,9 @@
 
   function saveStores() {
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify(state.store));
+      var keep = {};
+      COLLECTIONS.forEach(function (c) { if (!c.secret) keep[c.id] = state.store[c.id]; });
+      localStorage.setItem(LS_KEY, JSON.stringify(keep));
     } catch (e) {
       toast('이 브라우저에는 저장이 안 돼요. 통계 탭에서 데이터를 복사해 두세요.');
     }
@@ -92,12 +100,20 @@
 
   function notifyChange(id) {
     if (syncApplying) return;
+    if (id === 'secret') {
+      /* 비밀 보관함은 암호화해서 ShelfSecret이 따로 저장합니다. */
+      var sc = C.collection('secret');
+      var list = C.mergeLibrary(state.remote.secret || [], state.store.secret, sc);
+      if (window.ShelfSecret) window.ShelfSecret.onLocalChange(list);
+      return;
+    }
     if (window.ShelfSync) window.ShelfSync.notifyLocalChange(id);
   }
 
   /* 마지막으로 보던 기록을 하나 더 남겨 둡니다(인터넷이 끊겨도 비어 보이지 않게). */
   function saveSnapshot() {
     COLLECTIONS.forEach(function (c) {
+      if (c.secret) return;   /* 비밀 보관함은 암호화 파일에만 남깁니다. */
       try {
         localStorage.setItem(SNAP_PREFIX + ':' + c.id, JSON.stringify({
           savedAt: new Date().toISOString(),
@@ -108,6 +124,7 @@
   }
 
   function loadSnapshot(id) {
+    if (id === 'secret') return null;
     var keys = [SNAP_PREFIX + ':' + id];
     if (id === 'books') keys.push(SNAP_PREFIX);   /* 예전 한 개짜리 스냅샷 */
     for (var i = 0; i < keys.length; i++) {
@@ -527,8 +544,10 @@
     window.scrollTo(0, 0);
   }
 
-  function setCollection(id) {
+  function setCollection(id, internal) {
     if (!id || !C.collection(id)) return;
+    /* 비밀 보관함에서 다른 탭으로 옮기면 바로 잠깁니다. */
+    if (!internal && state.current === 'secret' && id !== 'secret') { lockSecret(); return; }
     state.current = id;
     state.query = '';
     state.filter = 'all';
@@ -550,7 +569,71 @@
     renderStats();
     renderSampleNote();
     setView('list');
+    updateSecretChrome();
     window.scrollTo(0, 0);
+  }
+
+  /* ---------------- 비밀 보관함 ---------------- */
+
+  /* 비밀 보관함 모드에서는 탭 줄을 감추고 "잠그기" 줄을 보여 줍니다. */
+  function updateSecretChrome() {
+    var on = state.current === 'secret';
+    if (el.collectionTabs) el.collectionTabs.hidden = on;
+    if (el.secretBar) el.secretBar.hidden = !on;
+    if (on) renderSecretStatus(el.secretState);
+  }
+
+  function normalizeSecretItems(items) {
+    var c = C.collection('secret');
+    return (items || []).map(function (b) { return C.normalizeItem(b, c); }).filter(Boolean);
+  }
+
+  /* 비밀번호를 맞히면 보관함 내용을 들여놓고 보관함 화면으로 갑니다. */
+  function enterSecret(items) {
+    state.store.secret = emptyStore();
+    state.remote.secret = normalizeSecretItems(items);
+    state.remoteLoaded.secret = true;
+    mergeAll();
+    setCollection('secret', true);
+  }
+
+  /* 다른 기기에서 바뀐 내용을 받았을 때(보관함을 열어 둔 채로). */
+  function applySecretItems(items) {
+    state.remote.secret = normalizeSecretItems(items);
+    state.remoteLoaded.secret = true;
+    if (state.current !== 'secret') return;
+    refresh();
+    if (state.detailId && state.detailColl === 'secret') {
+      var b = findIn('secret', state.detailId);
+      if (b) renderDetail(b);
+      else { closeModal(el.detailModal); state.detailId = null; }
+    }
+  }
+
+  /* 잠그기 — 암호 열쇠와 내용을 메모리에서 지우고 웹툰·웹소설 탭으로 돌아갑니다. */
+  function lockSecret(opts) {
+    if (lockingSecret) return;
+    lockingSecret = true;
+    var was = state.current === 'secret';
+    try {
+      state.store.secret = emptyStore();
+      state.remote.secret = [];
+      state.remoteLoaded.secret = false;
+      state.items.secret = [];
+      if (window.ShelfSecret) window.ShelfSecret.lock();
+      if (was) setCollection('webtoons', true);
+      else renderSummary();
+    } finally {
+      lockingSecret = false;
+    }
+    if (was && !(opts && opts.silent)) toast('보관함을 잠갔어요.');
+  }
+
+  function renderSecretStatus(s) {
+    if (!el.secretState) return;
+    s = s || (window.ShelfSecret ? window.ShelfSecret.status() : null);
+    el.secretState.textContent = (s && s.text) || '';
+    el.secretState.setAttribute('data-tone', (s && s.tone) || '');
   }
 
   /* ---------------- 상세 ---------------- */
@@ -889,6 +972,7 @@
           isbn: isbn,
           lang: (langs[0] || '').toLowerCase(),
           category: mapCategory(subjects.concat(creators)),
+          desc: String((((entry['dc$description'] || [{}])[0] || {}).$t) || ''),
           source: 'Google Books'
         };
       }).filter(function (r) { return r.title; });
@@ -920,6 +1004,7 @@
           isbn: isbn,
           lang: String(v.language || '').toLowerCase(),
           category: mapCategory(v.categories || []),
+          desc: String(v.description || ''),
           source: 'Google Books'
         };
       }).filter(function (r) { return r.title; });
@@ -931,11 +1016,13 @@
 
   function searchOpenLibrary(query) {
     var url = OPEN_LIBRARY_API + '?title=' + encodeURIComponent(query)
-      + '&limit=10&fields=title,author_name,cover_i,first_publish_year,subject,key';
+      + '&limit=10&fields=title,author_name,cover_i,first_publish_year,subject,key,first_sentence';
     return fetchJSON(url, 8000).then(function (data) {
       var docs = (data && data.docs) || [];
       return docs.map(function (doc) {
         var id = doc.cover_i;
+        var sentence = doc.first_sentence;
+        if (Array.isArray(sentence)) sentence = sentence[0];
         return {
           title: String(doc.title || '').trim(),
           creator: (doc.author_name || []).slice(0, 3).join(', '),
@@ -945,6 +1032,7 @@
           isbn: '',
           lang: 'ko',
           category: mapCategory(doc.subject || []),
+          desc: String(sentence || ''),
           source: 'Open Library'
         };
       }).filter(function (r) { return r.title; });
@@ -980,6 +1068,7 @@
       isbn: '',
       lang: primary.lang || '',
       category: '',
+      desc: '',
       source: primary.source
     };
 
@@ -991,6 +1080,15 @@
       if (!merged.year && m.year) merged.year = m.year;
       if (!merged.isbn && m.isbn) merged.isbn = m.isbn;
       if (!merged.category && m.category) merged.category = m.category;
+    });
+
+    /* 줄거리·소개는 한글이 있는 것을 먼저, 없으면 가장 긴 것을 씁니다. */
+    members.forEach(function (m) {
+      var d = String(m.desc || '').trim();
+      if (!d) return;
+      if (!merged.desc) { merged.desc = d; return; }
+      var koNow = /[가-힣]/.test(merged.desc), koNew = /[가-힣]/.test(d);
+      if ((koNew && !koNow) || (koNew === koNow && d.length > merged.desc.length)) merged.desc = d;
     });
 
     for (var j = 0; j < members.length; j++) {
@@ -1101,6 +1199,7 @@
     }
 
     var seq = ++lookupSeq;
+    state.lookupQuery = query;
     state.lookup = { busy: true, items: [], message: '', tone: '' };
     renderLookup();
 
@@ -1221,13 +1320,50 @@
     state.lookup = { busy: false, items: [], message: '', tone: '' };
     renderLookup();
 
+    /* 줄거리·소개가 있으면 한줄 감상이 비어 있을 때만 조용히 채워 둡니다.
+       (내가 쓴 감상은 건드리지 않습니다. 나중에 '줄거리 넣기' 버튼으로도 넣을 수 있음) */
+    var summary = cleanSummary(item.desc, 150);
+    /* 소개 글이 없거나, 한국어 제목인데 영어 소개뿐이면 한 번 더 찾아봅니다. */
+    var wantBetter = !summary || (/[가-힣]/.test(item.title) && !/[가-힣]/.test(summary));
+    state.lookupDesc = summary;
+    renderSummaryButton();
+    if (summary) {
+      var memoNow = el.fMemo.value.trim();
+      if (!memoNow || memoNow === lastAuto.memo) {
+        el.fMemo.value = summary;
+        lastAuto.memo = summary;
+      }
+    }
+    if (wantBetter) {
+      /* 후보 제목으로 먼저, 안 되면 내가 입력한 제목으로 백과 문서를 찾아봅니다. */
+      var titles = [baseTitle(item.title)];
+      var typed = String(state.lookupQuery || '').trim();
+      if (typed && titleKey(typed) !== titleKey(item.title) && titleKey(item.title).indexOf(titleKey(typed)) >= 0) {
+        titles.push(typed);
+      }
+      var extraLookup = (c.id === 'books')
+        ? fetchBookSummaryGoogle(item.title).then(function (s) { return s || fetchWorkSummary(c.id, titles); })
+        : fetchWorkSummary(c.id, titles);
+      extraLookup.then(function (s) {
+        if (!s || state.editingId !== formToken || el.formModal.hidden) return;
+        state.lookupDesc = s;
+        renderSummaryButton();
+        var now = el.fMemo.value.trim();
+        if (!now || now === lastAuto.memo) {
+          el.fMemo.value = s;
+          lastAuto.memo = s;
+        }
+      });
+    }
+    var extra = summary ? '·줄거리' : '';
+
     if (item.cover) {
       applyCover(item.cover);
-      toast('제목·' + who + '·표지를 채웠어요.');
+      toast('제목·' + who + extra + '·표지를 채웠어요.');
       return;
     }
     if (!item.isbn) {
-      toast('제목과 ' + who + '를 채웠어요. 표지는 못 찾았어요.');
+      toast('제목과 ' + who + extra + '를 채웠어요. 표지는 못 찾았어요.');
       return;
     }
 
@@ -1236,9 +1372,9 @@
       if (state.editingId !== formToken || el.formModal.hidden) return;
       if (ok) {
         applyCover(ol);
-        toast('제목·' + who + '·표지를 채웠어요.');
+        toast('제목·' + who + extra + '·표지를 채웠어요.');
       } else {
-        toast('제목과 ' + who + '를 채웠어요. 표지는 못 찾았어요.');
+        toast('제목과 ' + who + extra + '를 채웠어요. 표지는 못 찾았어요.');
       }
     });
   }
@@ -1259,7 +1395,7 @@
   var ANILIST_API = 'https://graphql.anilist.co';
   var GBOOKS_FEED_API = 'https://books.google.com/books/feeds/volumes';
   var ANILIST_QUERY = 'query ($q: String) { Page(perPage: 5) { media(search: $q, type: MANGA, sort: SEARCH_MATCH) {'
-    + ' id title { romaji native english } coverImage { large } format countryOfOrigin'
+    + ' id title { romaji native english } coverImage { large } format countryOfOrigin description(asHtml: false)'
     + ' staff(perPage: 3) { edges { role node { name { full native } } } } startDate { year } siteUrl } } }';
 
   /* 위키데이터 P31(종류) 값 — 작품 종류를 가려낼 때 씁니다. */
@@ -1326,7 +1462,7 @@
   function wikiSearchPages(lang, query, limit) {
     var url = apiUrl(WIKI_API[lang], {
       action: 'query', generator: 'search', gsrsearch: query, gsrlimit: limit || 6, gsrnamespace: 0,
-      prop: 'extracts', exintro: 1, explaintext: 1, exchars: 400, format: 'json', origin: '*'
+      prop: 'extracts', exintro: 1, explaintext: 1, exchars: 700, format: 'json', origin: '*'
     });
     return fetchJSON(url, 9000).then(function (data) {
       var pages = (data && data.query && data.query.pages) || {};
@@ -1568,6 +1704,127 @@
     return t.slice(0, 160);
   }
 
+  /* 검색으로 받은 줄거리·소개 글을 한줄 감상칸에 넣기 좋게 다듬습니다.
+     HTML 태그·위키 기호·각주를 걷어내고, 1~2문장(120~150자 안쪽)으로 자릅니다. */
+  function cleanSummary(raw, max) {
+    var t = String(raw || '');
+    if (!t) return '';
+    t = t.replace(/<br\s*\/?>/gi, ' ');
+    t = t.replace(/<\/(p|div|li|h[1-6])>/gi, '. ');
+    t = t.replace(/<[^>]+>/g, ' ');
+    t = t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+      .replace(/&#0?39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    t = t.replace(/\{\{[^{}]*\}\}/g, ' ');
+    t = t.replace(/\[\[([^\]|]*\|)?/g, '').replace(/\]\]/g, '');
+    t = t.replace(/\[[0-9]+\]/g, ' ');
+    t = t.replace(/(^|\s)[=*#]{2,}[^=*#]*[=*#]{2,}/g, ' ');
+    t = t.replace(/'''+/g, '');
+    t = t.replace(/\.\s*\./g, '.');
+    t = t.replace(/\s+([,.!?])/g, '$1');
+    t = t.replace(/\s+/g, ' ').trim();
+    t = t.replace(/^[\s.,·:;\-–—]+/, '');
+    if (!t) return '';
+
+    var limit = max || 150;
+    if (t.length <= limit) return t;
+
+    var sentences;
+    try { sentences = t.split(/(?<=[.!?。])\s+/); } catch (e) { sentences = [t]; }
+    var out = '';
+    for (var i = 0; i < sentences.length; i++) {
+      var next = out ? out + ' ' + sentences[i] : sentences[i];
+      if (next.length > limit) break;
+      out = next;
+      if (out.length >= limit * 0.72) break;
+    }
+    if (!out) {
+      var head = t.slice(0, limit);
+      var sp = head.lastIndexOf(' ');
+      out = (sp > limit * 0.55 ? head.slice(0, sp) : head).replace(/[\s,.;:·\-]+$/, '') + '…';
+    }
+    return out.trim();
+  }
+
+  /* 책 소개 글이 검색 결과에 없을 때, 제목이 꼭 맞는 책 소개글이나 백과 문서 첫머리를 한 번 더 찾아봅니다. */
+  function fetchBookSummaryGoogle(title) {
+    if (Date.now() < googleCooldownUntil) return Promise.resolve('');
+    return searchGoogleBooks(title).then(function (list) {
+      var q = titleKey(title);
+      var best = '';
+      for (var i = 0; i < (list || []).length; i++) {
+        var d = String(list[i].desc || '').trim();
+        if (!d) continue;
+        if (titleKey(list[i].title) === q) return cleanSummary(d, 150);
+        if (!best) best = d;
+      }
+      return best ? cleanSummary(best, 150) : '';
+    }, function () { return ''; });
+  }
+
+  /* 제목이 꼭 맞는 한국어 백과 문서의 첫머리를 가져옵니다. (작품 설명인지 한 번 더 가립니다) */
+  function workLikeText(text) {
+    return /(소설|웹툰|웹소설|만화|드라마|영화|애니메이션|연재|출판|작품|저자|작가|장편|단편|에세이|시집|시리즈|방송|개봉|무대|공연)/.test(String(text || ''));
+  }
+
+  function fetchBookSummary(title) {
+    var q = titleKey(title);
+    if (!q) return Promise.resolve('');
+    return wikiSearchPages('ko', title, 5).then(function (pages) {
+      var best = '';
+      var bestScore = 0;
+      (pages || []).forEach(function (p) {
+        var key = titleKey(p.title);
+        if (!(key === q || key.indexOf(q) === 0)) return;
+        var extract = String(p.extract || '');
+        if (!workLikeText(extract)) return;     /* 식물·지명 같은 동명 문서는 건너뜁니다 */
+        var score = 1;
+        if (key !== q) score += 1;              /* '아몬드 (소설)'처럼 종류를 붙인 문서를 더 선호 */
+        if (workLikeText(p.title)) score += 1;
+        if (extract.indexOf('《' + title) === 0 || extract.indexOf(title) === 0) score += 1;
+        if (score > bestScore) { bestScore = score; best = extract; }
+      });
+      return best ? cleanSummary(best, 150) : '';
+    }, function () { return ''; });
+  }
+
+  /* 그 기록 종류에 어울리는 줄거리인지 가립니다. (책 칸에 영화 줄거리가 들어가지 않게) */
+  function summaryKindOk(collId, extract) {
+    var t = String(extract || '');
+    if (collId === 'videos') return looksLikeVideo(t);
+    if (collId === 'webtoons' || collId === 'secret') return !!(kindFromText(t) || looksLikeWebtoon(t));
+    if (/(영화|드라마|텔레비전|방송|애니메이션)/.test(t) && !/(소설|에세이|문학|저서|작품집|동화|수필)/.test(t)) return false;
+    return workLikeText(t);
+  }
+
+  /* 제목이 꼭 맞는 백과 문서에서 줄거리를 찾습니다. 후보 제목 → 내가 입력한 제목 순서로. */
+  function fetchWorkSummary(collId, titles) {
+    var tried = [];
+    function tryOne(i) {
+      if (i >= titles.length) return Promise.resolve('');
+      var title = String(titles[i] || '').trim();
+      var q = titleKey(title);
+      if (!q || tried.indexOf(q) >= 0) return tryOne(i + 1);
+      tried.push(q);
+      return wikiSearchPages('ko', title, 5).then(function (pages) {
+        var best = '';
+        var bestScore = 0;
+        (pages || []).forEach(function (p) {
+          var key = titleKey(p.title);
+          if (!(key === q || key.indexOf(q) === 0)) return;
+          var extract = String(p.extract || '');
+          if (!summaryKindOk(collId, extract)) return;
+          var score = 1;
+          if (key !== q) score += 1;
+          if (extract.indexOf('《' + title) === 0 || extract.indexOf(title) === 0) score += 1;
+          if (score > bestScore) { bestScore = score; best = extract; }
+        });
+        if (best) return cleanSummary(best, 150);
+        return tryOne(i + 1);
+      }, function () { return tryOne(i + 1); });
+    }
+    return tryOne(0);
+  }
+
   function looksLikeWebtoon(text) {
     return /(웹툰|웹소설|만화|소설|코믹|novel|comic|manhwa|manga)/i.test(String(text || ''));
   }
@@ -1783,6 +2040,7 @@
           cover: ((m.coverImage || {}).large) || '',
           kind: String(m.format || '').toUpperCase() === 'NOVEL' ? '웹소설' : '웹툰',
           link: m.siteUrl || '',
+          desc: String(m.description || ''),
           media: m.countryOfOrigin === 'KR' ? 'webtoon' : '',
           rank: 3,
           source: 'AniList'
@@ -1996,10 +2254,11 @@
     }
 
     var seq = ++lookupSeq;
+    state.lookupQuery = query;
     state.lookup = { busy: true, items: [], message: '', tone: '' };
     renderLookup();
 
-    var job = collectionId === 'webtoons' ? webtoonSources(query) : videoSources(query);
+    var job = (c.mediaLookup === 'webtoon' || c.id === 'webtoons') ? webtoonSources(query) : videoSources(query);
     job.then(function (res) {
       if (seq !== lookupSeq) return;
       var items = mediaCandidates(res.items, query, res.boost);
@@ -2061,8 +2320,11 @@
     renderFormKinds(item ? (item.kind || c.defaultKind) : c.defaultKind, false);
     renderFormStatus(item ? item.status : 'done');
     clearTimeout(lookupTimer);
-    lastAuto = { creator: '', platform: '', link: '' };
+    lastAuto = { creator: '', platform: '', link: '', memo: '' };
     state.lookup = { busy: false, items: [], message: '', tone: '' };
+    state.lookupDesc = '';
+    state.lookupQuery = '';
+    renderSummaryButton();
     renderLookup();
     openModal(el.formModal);
     el.formBody.scrollTop = 0;
@@ -2072,6 +2334,12 @@
   function renderFormRating() {
     el.fRating.innerHTML = ratingButtonsHTML(state.formRating);
     el.fRatingLabel.textContent = '별점' + (state.formRating ? ' (노란 별 ' + state.formRating + '개)' : '');
+  }
+
+  /* 검색으로 줄거리를 가져왔을 때만 보이는 '줄거리 넣기' 버튼 */
+  function renderSummaryButton() {
+    if (!el.fSummary) return;
+    el.fSummary.hidden = !state.lookupDesc;
   }
 
   function setCoverPreview(url) {
@@ -2486,7 +2754,7 @@
       sync.start();
       return;
     }
-    Promise.all(COLLECTIONS.map(function (c) { return loadFromFile(c.id); })).then(function () {
+    Promise.all(COLLECTIONS.filter(function (c) { return !c.secret; }).map(function (c) { return loadFromFile(c.id); })).then(function () {
       refresh();
       if (state.detailId && state.detailColl) {
         var b = findIn(state.detailColl, state.detailId);
@@ -2503,7 +2771,7 @@
     fileTimer = setInterval(function () {
       if (document.hidden) return;
       if (window.ShelfSync && window.ShelfSync.getStatus().connected) return;
-      Promise.all(COLLECTIONS.map(function (c) { return loadFromFile(c.id); })).then(function () {
+      Promise.all(COLLECTIONS.filter(function (c) { return !c.secret; }).map(function (c) { return loadFromFile(c.id); })).then(function () {
         mergeAll();
         renderSummary();
         renderChips();
@@ -2805,6 +3073,24 @@
     });
 
     el.fCover.addEventListener('input', function () { setCoverPreview(el.fCover.value.trim()); });
+    if (el.fSummary) {
+      el.fSummary.addEventListener('click', function () {
+        var s = state.lookupDesc;
+        if (!s) { toast('먼저 제목으로 표지·줄거리를 찾아 주세요.'); return; }
+        var cur = el.fMemo.value.trim();
+        if (!cur || cur === lastAuto.memo) {
+          el.fMemo.value = s;
+          lastAuto.memo = s;
+          toast('줄거리를 넣었어요.');
+          return;
+        }
+        if (cur.indexOf(s) >= 0) { toast('줄거리가 이미 들어 있어요.'); return; }
+        el.fMemo.value = cur + '\n' + s;
+        lastAuto.memo = '';
+        toast('줄거리를 감상 뒤에 붙였어요.');
+        el.fMemo.focus();
+      });
+    }
     el.fTitle.addEventListener('input', function () {
       el.fTitleError.hidden = true;
       var c = current();
@@ -2874,6 +3160,20 @@
 
     el.confirmCancel.addEventListener('click', function () { settleConfirm(false); });
     el.confirmOk.addEventListener('click', function () { settleConfirm(true); });
+
+    /* 비밀 보관함 — 장식(네잎클로버), 잠그기, 설정 */
+    if (el.secretClover) {
+      el.secretClover.addEventListener('click', function () {
+        if (window.ShelfSecret) window.ShelfSecret.openPin();
+      });
+    }
+    if (el.secretLock) el.secretLock.addEventListener('click', function () { lockSecret(); });
+    if (el.secretSettings) {
+      el.secretSettings.addEventListener('click', function () {
+        if (window.ShelfSecret) window.ShelfSecret.openSettings();
+      });
+    }
+
 
     Array.prototype.forEach.call(document.querySelectorAll('.modal'), function (modal) {
       modal.addEventListener('click', function (e) {
@@ -2968,6 +3268,7 @@
       fLinkField: $('f-link-field'),
       fMemo: $('f-memo'),
       fMemoLabel: $('f-memo-label'),
+      fSummary: $('f-summary'),
       fRating: $('f-rating'),
       fRatingLabel: $('f-rating-label'),
       importModal: $('import-modal'),
@@ -2990,6 +3291,11 @@
       syncMsg: $('sync-msg'),
       syncConnect: $('sync-connect'),
       syncUnlink: $('sync-unlink'),
+      secretBar: $('secret-bar'),
+      secretState: $('secret-state'),
+      secretLock: $('secret-lock'),
+      secretSettings: $('secret-settings'),
+      secretClover: $('secret-clover'),
       confirmModal: $('confirm-modal'),
       confirmTitle: $('confirm-title'),
       confirmMessage: $('confirm-message'),
@@ -3023,6 +3329,15 @@
     }
     loadRemote();
     registerSW();
+
+    if (window.ShelfSecret) {
+      window.ShelfSecret.init({
+        onUnlocked: enterSecret,
+        onRemoteItems: applySecretItems,
+        onStatus: renderSecretStatus,
+        toast: toast
+      });
+    }
   }
 
   if (document.readyState === 'loading') {

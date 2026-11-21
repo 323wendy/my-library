@@ -1,13 +1,15 @@
 /* 나만의 기록 — 오프라인 캐시
    앱 껍데기만 저장하고, 기록 데이터(books.json · videos.json · webtoons.json)는
-   항상 새로 확인합니다. */
-const CACHE = 'shelf-v12';
+   항상 새로 확인합니다. 비밀 보관함(secret-webtoons.json)은 앱이 GitHub API로
+   직접 다루고(암호문), 이 캐시는 건드리지 않습니다. */
+const CACHE = 'shelf-v13';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './core.js',
   './sync.js',
+  './secret.js',
   './app.js',
   './manifest.webmanifest',
   './icon.svg',

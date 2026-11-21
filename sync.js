@@ -16,6 +16,12 @@
   var PUSH_DELAY = 900;     /* 연달아 고칠 때 커밋이 쏟아지지 않게 잠깐 모읍니다 */
   var POLL_MS = 45000;      /* 다른 기기의 변경을 확인하는 주기 */
 
+  /* 비밀 보관함(secret)은 암호화된 별도 파일(secret-webtoons.json)을 쓰므로
+     이 동기화가 절대 건드리지 않습니다(평문이 공개 저장소로 나가지 않게). */
+  function syncedCollections() {
+    return C.COLLECTIONS.filter(function (c) { return !c.secret; });
+  }
+
   var hooks = null;
   var st = {
     token: '',
@@ -79,7 +85,7 @@
 
   function summaryText() {
     var parts = [];
-    C.COLLECTIONS.forEach(function (c) {
+    syncedCollections().forEach(function (c) {
       var n = st.counts[c.id];
       if (typeof n === 'number') parts.push(c.label + ' ' + n + c.unit);
     });
@@ -372,7 +378,7 @@
     setPhase('syncing', '최신 기록을 확인하고 있어요.');
     var pushed = 0;
     var chain = Promise.resolve();
-    C.COLLECTIONS.forEach(function (c) {
+    syncedCollections().forEach(function (c) {
       chain = chain.then(function () {
         return runSyncFile(c.id, reason || 'manual');
       }).then(function (r) {
@@ -398,7 +404,8 @@
   }
 
   function schedulePush(id, delay) {
-    if (!id) { C.COLLECTIONS.forEach(function (c) { schedulePush(c.id, delay); }); return; }
+    if (!id) { syncedCollections().forEach(function (c) { schedulePush(c.id, delay); }); return; }
+    if (id === 'secret') return;   /* 비밀 보관함은 ShelfSecret이 따로 저장합니다. */
     clearTimeout(st.pushTimers[id]);
     st.pushTimers[id] = setTimeout(function () {
       st.pushTimers[id] = null;
@@ -409,6 +416,7 @@
 
   /* 기록이 바뀔 때마다 app.js가 부릅니다. 바뀐 기록 종류만 올립니다. */
   function notifyLocalChange(id) {
+    if (id === 'secret') return;   /* 비밀 보관함은 ShelfSecret이 따로 저장합니다. */
     if (!st.token) {
       if (st.phase !== 'off') setPhase('off', '');
       return;
@@ -432,7 +440,7 @@
     st.repo = repo;
     if (!st.token) return Promise.resolve({ ok: false, message: '토큰을 먼저 넣어 주세요.' });
 
-    C.COLLECTIONS.forEach(function (c) {
+    syncedCollections().forEach(function (c) {
       var fs = fileState(c.id);
       fs.firstSyncDone = false;
       fs.sha = null;
@@ -463,7 +471,7 @@
   function disconnect() {
     st.token = '';
     st.lastError = null;
-    C.COLLECTIONS.forEach(function (c) {
+    syncedCollections().forEach(function (c) {
       var fs = fileState(c.id);
       fs.sha = null;
       fs.fingerprint = '';

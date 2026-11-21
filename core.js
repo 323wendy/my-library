@@ -125,6 +125,25 @@
     }
   ];
 
+  /* 비밀 보관함 — 화면 아래 탭에는 나오지 않고, 웹툰·웹소설 탭의 작은 장식을
+     눌러 4자리 비밀번호를 넣어야만 열립니다. 내용은 PIN으로 암호화해
+     secret-webtoons.json에 따로 저장합니다(공개 저장소에 그대로 올라가지 않게). */
+  COLLECTIONS.push(Object.assign({}, COLLECTIONS[2], {
+    id: 'secret',
+    file: 'secret-webtoons.json',
+    listKey: 'items',
+    label: '비밀 보관함',
+    emoji: '🔐',
+    unit: '개',
+    itemWord: '작품',
+    tint: 'peach',
+    secret: true,
+    mediaLookup: 'webtoon',
+    searchPlaceholder: '보관함 안에서 제목, 작가, 한 줄 감상, 명대사 검색',
+    stats: { done: '완독한 작품', year: '올해 완독' },
+    empty: { emoji: '🔐', text: '보관함이 비어 있어요. 남몰래 정주행한 작품을 담아두세요.' }
+  }));
+
   var PLATFORMS = ['네이버웹툰', '네이버시리즈', '카카오페이지', '카카오웹툰', '리디', '레진코믹스', '문피아', '노벨피아', '기타'];
 
   var DEFAULT_CATEGORIES = ['소설', '인문', '에세이', '경제/경영', '기타'];

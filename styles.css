@@ -1814,3 +1814,232 @@ h1 { font-size: 25px; }
 .summary .sum-stars { white-space: nowrap; }
 .summary .sum-stars { color: #c08e1b; font-weight: 700; }
 .summary .sum-stars:not(.on) { color: #a3948a; font-weight: 500; }
+
+/* ============================================================
+   비밀 보관함 — 작은 장식(입구) · 잠금 화면 · 보관함 화면
+   ============================================================ */
+
+.app-header { position: relative; }
+
+/* 웹툰·웹소설 탭에서만 보이는 작은 네잎클로버 스티커.
+   글자·툴팁·자물쇠 표시 없이 그냥 장식처럼 보이게 두었습니다. */
+.secret-clover {
+  position: absolute;
+  top: 40px;
+  right: 108px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  transform: rotate(-9deg);
+  transition: transform .18s ease;
+}
+.app[data-collection="webtoons"] .secret-clover { display: inline-flex; }
+.secret-clover:active { transform: rotate(-9deg) scale(.9); }
+.secret-clover svg {
+  width: 27px;
+  height: 27px;
+  overflow: visible;
+  filter: drop-shadow(0 2px 3px rgba(120, 96, 84, .26));
+}
+.secret-clover .cl-out ellipse,
+.secret-clover .cl-out path {
+  fill: #fffdfb;
+  stroke: #fffdfb;
+  stroke-width: 3.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.secret-clover .cl-in ellipse { fill: #b2cfa8; }
+.secret-clover .cl-in ellipse:nth-child(2),
+.secret-clover .cl-in ellipse:nth-child(4) { fill: #a5c69b; }
+.secret-clover .cl-in ellipse:nth-child(3) { fill: #9abd90; }
+.secret-clover .cl-in path { fill: #a8c89e; }
+.secret-clover .cl-vein {
+  fill: none;
+  stroke: rgba(255, 253, 250, .72);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+}
+
+/* 탭 줄 자리에 나타나는 보관함 안내 줄 */
+.tabs[hidden] { display: none !important; }
+.secret-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  margin-top: 12px;
+  padding: 0 6px 0 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 18px;
+  background: var(--tray);
+}
+.secret-bar[hidden] { display: none !important; }
+.secret-bar-title {
+  flex: none;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+  color: var(--accent-ink);
+  white-space: nowrap;
+}
+.secret-bar-emoji { font-size: 13px; }
+.secret-bar-state {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #9c8d84;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.secret-bar-state[data-tone="error"] { color: #b4645c; }
+.secret-bar-btn {
+  flex: none;
+  height: 32px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(120, 96, 84, .1);
+}
+.secret-bar-btn.lock { color: #a05f68; }
+.secret-bar-btn:active { transform: scale(.96); }
+
+/* 보관함 화면은 웹툰·웹소설과 같은 피치 파스텔을 조금 더 차분하게 */
+.app[data-collection="secret"] {
+  --accent: #a9737f;
+  --accent-ink: #8a4f5a;
+  --accent-soft: #f8e4e2;
+  --tray: #f7e3e0;
+  --sticker: #fbdcdb;
+}
+.app[data-collection="secret"] .chip.is-active { background: #9a5a66; border-color: #9a5a66; }
+
+/* 숫자 키패드 */
+.pin-dialog {
+  max-width: 340px;
+  padding: 18px 18px calc(16px + var(--safe-bottom));
+  text-align: center;
+}
+.pin-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.pin-head h2 { margin: 0; font-size: 17px; }
+.pin-head .icon-btn { width: 34px; height: 34px; font-size: 22px; color: var(--ink-3); }
+.pin-lead { margin: 4px 0 12px !important; font-size: 13px !important; color: var(--ink-2) !important; }
+.pin-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 34px;
+  margin-bottom: 4px;
+}
+.pin-dots i {
+  display: block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #f0e3dc;
+  box-shadow: inset 0 1px 2px rgba(120, 96, 84, .16);
+  transition: background .16s ease, transform .16s ease;
+}
+.pin-dots i.on { background: #b7747f; transform: scale(1.12); }
+.pin-dots[data-busy="1"] i { animation: pin-pulse .9s ease-in-out infinite; }
+@keyframes pin-pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+.pin-dots.shake { animation: pin-shake .4s ease; }
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  45% { transform: translateX(6px); }
+  70% { transform: translateX(-3px); }
+}
+.pin-error {
+  min-height: 18px;
+  margin: 0 0 6px !important;
+  font-size: 12.5px !important;
+  font-weight: 600;
+  color: #c0605c !important;
+}
+.pin-error[hidden] { display: block; visibility: hidden; }
+.pin-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 2px 0 10px;
+}
+.pin-key {
+  height: 50px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #fffdfb;
+  color: var(--ink);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  box-shadow: 0 1px 2px rgba(120, 96, 84, .06);
+  transition: transform .1s ease, background .15s ease;
+}
+.pin-key:active { transform: scale(.96); background: #fbeae7; }
+.pin-key:disabled { opacity: .55; }
+.pin-key.blank { border: 0; background: none; box-shadow: none; }
+.pin-key.del { font-size: 17px; color: var(--ink-2); }
+.pin-foot { margin: 0 !important; font-size: 11.5px !important; color: var(--ink-3) !important; line-height: 1.5 !important; }
+.pin-foot[hidden] { display: none; }
+
+/* 보관함 설정 */
+.secret-settings { max-width: 360px; }
+.secret-settings-note { font-size: 13px !important; line-height: 1.6 !important; }
+.secret-settings-status {
+  padding: 10px 12px;
+  margin: 0 0 14px !important;
+  border-radius: 12px;
+  background: var(--line-soft);
+  font-size: 12px !important;
+  color: #8a7d75 !important;
+  white-space: pre-line;
+}
+.secret-settings-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+.secret-settings-actions .btn-soft { flex: 1; height: 44px; font-size: 13.5px; }
+.secret-settings .btn-primary.wide { height: 46px; font-size: 15px; }
+
+@media (max-width: 360px) {
+  .secret-clover { right: 96px; }
+}
+
+/* 한 줄 감상 아래 '줄거리 넣기' — 검색으로 줄거리를 가져왔을 때만 보입니다 */
+.btn-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  margin-top: 8px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-ink, #7c5a49);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -.1px;
+  box-shadow: 0 1px 3px rgba(120, 96, 84, .08);
+  transition: transform .12s ease, background .15s ease;
+}
+.btn-summary[hidden] { display: none; }
+.btn-summary:active { transform: scale(.97); background: var(--accent-soft, #fbe7e3); }
