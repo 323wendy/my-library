@@ -580,7 +580,7 @@
     var on = state.current === 'secret';
     if (el.collectionTabs) el.collectionTabs.hidden = on;
     if (el.secretBar) el.secretBar.hidden = !on;
-    if (on) renderSecretStatus(el.secretState);
+    if (on) renderSecretStatus();
   }
 
   function normalizeSecretItems(items) {

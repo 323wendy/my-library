@@ -289,7 +289,7 @@
     else if (st.phase === 'local') t = '이 기기에만 저장됨';
     else if (st.phase === 'saved') {
       if (time) t = (st.token ? '저장됨' : '이 기기에만 저장됨') + ' · ' + time;
-      else t = st.token ? '최신 상태' : '동기화 미연결 · 이 기기에만';
+      else t = st.token ? '최신 상태' : '동기화 안 됨 · 이 기기에서만';
     }
     return t;
   }
