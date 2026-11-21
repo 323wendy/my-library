@@ -1,9 +1,26 @@
 {
   "app": "나만의 기록",
   "version": 1,
-  "updatedAt": "2026-11-17T08:40:00Z",
-  "count": 2,
+  "updatedAt": "2026-11-21T08:24:33.242Z",
+  "count": 3,
   "items": [
+    {
+      "id": "dbc51662-880c-4198-8c64-b0a0af180ef5",
+      "title": "미완결",
+      "creator": "안나래, 칸트웍스",
+      "kind": "웹툰",
+      "platform": "",
+      "startDate": "2026-11-01",
+      "endDate": "2026-11-21",
+      "status": "완독",
+      "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx128220-35tG8Z2wtwvz.jpg",
+      "note": "",
+      "rating": 3,
+      "quotes": [],
+      "link": "https://anilist.co/manga/128220",
+      "updatedAt": "2026-11-21T08:24:32.333Z",
+      "createdAt": "2026-11-21T08:24:32.333Z"
+    },
     {
       "id": "2d69807e-edb8-435d-a45a-ae08fc103ff0",
       "title": "어두운 바다의 등불이 되어",
