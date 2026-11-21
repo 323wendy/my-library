@@ -287,7 +287,10 @@
     else if (st.phase === 'busy') t = '확인 중…';
     else if (st.phase === 'error') t = st.message || '저장하지 못했어요';
     else if (st.phase === 'local') t = '이 기기에만 저장됨';
-    else if (st.phase === 'saved') t = (st.token ? '저장됨' : '이 기기에만 저장됨') + (time ? ' · ' + time : '');
+    else if (st.phase === 'saved') {
+      if (time) t = (st.token ? '저장됨' : '이 기기에만 저장됨') + ' · ' + time;
+      else t = st.token ? '최신 상태' : '동기화 미연결 · 이 기기에만';
+    }
     return t;
   }
 
