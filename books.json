@@ -1,7 +1,7 @@
 {
   "app": "나만의 기록",
   "version": 3,
-  "updatedAt": "2026-11-27T05:26:28.135Z",
+  "updatedAt": "2026-11-27T05:55:48.195Z",
   "count": 20,
   "books": [
     {
@@ -14,10 +14,10 @@
       "finishedAt": "",
       "status": "읽는 중",
       "cover": "https://books.google.com/books/content?id=-6oQEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
-      "memo": "[비밀과 거짓말] 메인작가 전수라 /막내작가 민시현 / 메인피디 박재민",
+      "memo": "[비밀과 거짓말] 메인작가 전수라 /막내작가 민시현 / 메인피디 박재민 / 애기동자 무당/무당제자 윤동욱",
       "rating": 0,
       "quotes": [],
-      "updatedAt": "2026-11-27T05:26:27.708Z",
+      "updatedAt": "2026-11-27T05:55:47.285Z",
       "createdAt": "2026-11-27T05:12:28.784Z"
     },
     {
