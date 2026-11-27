@@ -1,25 +1,9 @@
 {
   "app": "나만의 기록",
   "version": 3,
-  "updatedAt": "2026-11-27T06:20:53.801Z",
+  "updatedAt": "2026-11-27T07:05:31.307Z",
   "count": 20,
   "books": [
-    {
-      "id": "3674ef8c-2e2b-440f-8387-26f457f5de54",
-      "title": "어두운물",
-      "author": "전건우",
-      "category": "소설",
-      "startDate": "2026-11-27",
-      "endDate": "",
-      "finishedAt": "",
-      "status": "읽는 중",
-      "cover": "https://books.google.com/books/content?id=-6oQEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
-      "memo": "공포. [비밀과 거짓말] 메인작가 전수라 /막내작가 민시현 / 메인피디 박재민 / 애기동자 무당/무당제자 윤동욱 / 실종 조희정",
-      "rating": 3,
-      "quotes": [],
-      "updatedAt": "2026-11-27T06:20:52.899Z",
-      "createdAt": "2026-11-27T05:12:28.784Z"
-    },
     {
       "id": "b815b9d4-18dc-4544-a2d8-ae56d89e21da",
       "title": "행복의 기원(10주년 기념 개정판)",
@@ -82,6 +66,22 @@
       "quotes": [],
       "updatedAt": "2026-11-16T12:52:46.513Z",
       "createdAt": "2026-11-16T12:52:46.513Z"
+    },
+    {
+      "id": "3674ef8c-2e2b-440f-8387-26f457f5de54",
+      "title": "어두운물",
+      "author": "전건우",
+      "category": "소설",
+      "startDate": "2026-11-27",
+      "endDate": "2026-11-27",
+      "finishedAt": "2026-11-27",
+      "status": "완독",
+      "cover": "https://books.google.com/books/content?id=-6oQEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "공포. [비밀과 거짓말] 메인작가 전수라 /막내작가 민시현 / 메인피디 박재민 / 애기동자 무당/무당제자 윤동욱 / 실종 조희정",
+      "rating": 3,
+      "quotes": [],
+      "updatedAt": "2026-11-27T07:05:30.404Z",
+      "createdAt": "2026-11-27T05:12:28.784Z"
     },
     {
       "id": "21b838c4-c4ca-4016-a23e-663f7b88901c",
