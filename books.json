@@ -1,7 +1,7 @@
 {
   "app": "나만의 기록",
   "version": 3,
-  "updatedAt": "2026-11-27T05:12:29.690Z",
+  "updatedAt": "2026-11-27T05:24:57.468Z",
   "count": 20,
   "books": [
     {
@@ -14,10 +14,10 @@
       "finishedAt": "",
       "status": "읽는 중",
       "cover": "https://books.google.com/books/content?id=-6oQEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
-      "memo": "K-호러 장인, 공포소설의 대가. 소설가 전건우의 정통 호러 소설이 앤드에서 출간되었다. 2008년 작품 활동을 시작한 후, 호러와 추리/미스터리, 스릴러 장르의 작품을 꾸준히..",
+      "memo": "[비밀과 거짓말] 메인작가 전수라 /민시현",
       "rating": 0,
       "quotes": [],
-      "updatedAt": "2026-11-27T05:12:28.784Z",
+      "updatedAt": "2026-11-27T05:24:56.561Z",
       "createdAt": "2026-11-27T05:12:28.784Z"
     },
     {
