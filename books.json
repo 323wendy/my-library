@@ -1,21 +1,37 @@
 {
   "app": "나만의 기록",
   "version": 3,
-  "updatedAt": "2026-11-28T03:45:31.475Z",
+  "updatedAt": "2026-11-28T03:46:58.404Z",
   "count": 20,
   "books": [
+    {
+      "id": "e4744cc2-65e5-450c-a6a8-c4d2727e53e6",
+      "title": "눈물을 마시는 새 3",
+      "author": "이영도",
+      "category": "소설",
+      "startDate": "2026-08-01",
+      "endDate": "",
+      "finishedAt": "",
+      "status": "읽는 중",
+      "cover": "https://books.google.com/books/content?id=Wq9PcjjX6_sC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
+      "memo": "",
+      "rating": 0,
+      "quotes": [],
+      "updatedAt": "2026-11-16T12:52:46.513Z",
+      "createdAt": "2026-11-16T12:52:46.513Z"
+    },
     {
       "id": "b815b9d4-18dc-4544-a2d8-ae56d89e21da",
       "title": "행복의 기원(10주년 기념 개정판)",
       "author": "서은국",
       "category": "인문",
       "startDate": "2026-11-19",
-      "endDate": "",
-      "finishedAt": "",
-      "status": "읽는 중",
+      "endDate": "2026-11-28",
+      "finishedAt": "2026-11-28",
+      "status": "완독",
       "cover": "https://books.google.com/books/content?id=WRwLEQAAQBAJ&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
       "memo": "",
-      "rating": 0,
+      "rating": 2,
       "quotes": [
         {
           "id": "7397b563-a661-419e-b1d2-6c6f26808db8",
@@ -60,24 +76,8 @@
           "page": "224"
         }
       ],
-      "updatedAt": "2026-11-28T03:45:30.574Z",
+      "updatedAt": "2026-11-28T03:46:57.500Z",
       "createdAt": "2026-11-19T00:26:17.948Z"
-    },
-    {
-      "id": "e4744cc2-65e5-450c-a6a8-c4d2727e53e6",
-      "title": "눈물을 마시는 새 3",
-      "author": "이영도",
-      "category": "소설",
-      "startDate": "2026-08-01",
-      "endDate": "",
-      "finishedAt": "",
-      "status": "읽는 중",
-      "cover": "https://books.google.com/books/content?id=Wq9PcjjX6_sC&printsec=frontcover&img=1&zoom=3&source=gbs_gdata",
-      "memo": "",
-      "rating": 0,
-      "quotes": [],
-      "updatedAt": "2026-11-16T12:52:46.513Z",
-      "createdAt": "2026-11-16T12:52:46.513Z"
     },
     {
       "id": "3674ef8c-2e2b-440f-8387-26f457f5de54",
