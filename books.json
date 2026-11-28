@@ -1,9 +1,25 @@
 {
   "app": "나만의 기록",
   "version": 3,
-  "updatedAt": "2026-11-28T03:46:58.404Z",
-  "count": 20,
+  "updatedAt": "2026-11-28T07:34:31.386Z",
+  "count": 21,
   "books": [
+    {
+      "id": "c55b5e15-13bf-4118-984e-39cc7c907a5f",
+      "title": "녹색 절벽의 신자들",
+      "author": "",
+      "category": "소설",
+      "startDate": "2026-11-28",
+      "endDate": "",
+      "finishedAt": "",
+      "status": "읽는 중",
+      "cover": "",
+      "memo": "",
+      "rating": 0,
+      "quotes": [],
+      "updatedAt": "2026-11-28T07:34:30.481Z",
+      "createdAt": "2026-11-28T07:34:30.481Z"
+    },
     {
       "id": "e4744cc2-65e5-450c-a6a8-c4d2727e53e6",
       "title": "눈물을 마시는 새 3",
