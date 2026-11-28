@@ -1,25 +1,9 @@
 {
   "app": "나만의 기록",
   "version": 1,
-  "updatedAt": "2026-11-28T06:44:04.899Z",
+  "updatedAt": "2026-11-28T06:44:11.827Z",
   "count": 3,
   "items": [
-    {
-      "id": "1a5d112e-10df-4108-889a-00ad87eeac80",
-      "title": "데블스 플랜: 데드 어게인",
-      "creator": "정종연",
-      "kind": "예능",
-      "startDate": "2026-11-07",
-      "endDate": "2026-11-21",
-      "status": "보는 중",
-      "cover": "https://search.pstatic.net/common?type=f208_312&src=https%3A%2F%2Fcsearch-phinf.pstatic.net%2F20261013_26%2F1791854567707Gs6Ji_JPEG%2F74d84afa4fdcf4bb5b32f5b8b9f5ba0a.jpg",
-      "note": "데블스 플랜: 데드 어게인은 2026년 4분기 넷플릭스에서 공개된 대한민국의 두뇌 서바이벌 예능 프로그램이다. 《데블스 플랜》 시리즈의 세 번째 시즌으로, 정종연 PD가 연출을 맡았다.",
-      "rating": 2,
-      "quotes": [],
-      "link": "",
-      "updatedAt": "2026-11-28T06:44:03.998Z",
-      "createdAt": "2026-11-21T10:48:15.021Z"
-    },
     {
       "id": "56ef6fa6-8ac8-412d-b092-eb81f27df76d",
       "title": "100일의 거짓말",
@@ -35,6 +19,22 @@
       "link": "",
       "updatedAt": "2026-11-17T06:56:38.596Z",
       "createdAt": "2026-11-17T06:56:38.596Z"
+    },
+    {
+      "id": "1a5d112e-10df-4108-889a-00ad87eeac80",
+      "title": "데블스 플랜: 데드 어게인",
+      "creator": "정종연",
+      "kind": "예능",
+      "startDate": "2026-11-07",
+      "endDate": "2026-11-21",
+      "status": "봤음",
+      "cover": "https://search.pstatic.net/common?type=f208_312&src=https%3A%2F%2Fcsearch-phinf.pstatic.net%2F20261013_26%2F1791854567707Gs6Ji_JPEG%2F74d84afa4fdcf4bb5b32f5b8b9f5ba0a.jpg",
+      "note": "데블스 플랜: 데드 어게인은 2026년 4분기 넷플릭스에서 공개된 대한민국의 두뇌 서바이벌 예능 프로그램이다. 《데블스 플랜》 시리즈의 세 번째 시즌으로, 정종연 PD가 연출을 맡았다.",
+      "rating": 2,
+      "quotes": [],
+      "link": "",
+      "updatedAt": "2026-11-28T06:44:10.925Z",
+      "createdAt": "2026-11-21T10:48:15.021Z"
     },
     {
       "id": "92c3246f-6f34-450b-b60a-524bef612835",
